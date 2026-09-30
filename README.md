@@ -1,5 +1,5 @@
-# RateLab — Freelance Rate Calculator
+# RateLab
 
 Live: https://hcc5ksj82m-rgb.github.io/freelance-rate-calculator/
 
-Pages: `index.html` (calculator), `pricing.html`, `hire.html`, `styles.css`
+Tools: freelance calculator, pricing guide, Pokemon demo chart, flip profit calculator, monetise/earn hub, hire page.
