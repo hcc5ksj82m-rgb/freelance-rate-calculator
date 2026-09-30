@@ -3,67 +3,63 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Freelance Rate Calculator — free tool</title>
-  <style>
-    :root { font-family: system-ui, sans-serif; color: #0f172a; background: #f1f5f9; }
-    body { max-width: 520px; margin: 2rem auto; padding: 0 1rem; }
-    .card { background: #fff; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(15,23,42,.08); }
-    h1 { font-size: 1.4rem; margin: 0 0 .35rem; }
-    p.lead { color: #64748b; margin: 0 0 1.25rem; font-size: .95rem; }
-    label { display: block; font-size: .85rem; font-weight: 600; margin: .75rem 0 .25rem; }
-    input { width: 100%; box-sizing: border-box; padding: .65rem .75rem; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 1rem; }
-    button { margin-top: 1rem; width: 100%; padding: .8rem; border: 0; border-radius: 12px; background: #2563eb; color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer; }
-    button:hover { background: #1d4ed8; }
-    .result { margin-top: 1.25rem; padding: 1rem; background: #eff6ff; border-radius: 12px; display: none; }
-    .result strong { font-size: 1.35rem; color: #1e40af; }
-    .tip { font-size: .85rem; color: #475569; margin-top: .75rem; }
-    footer { margin-top: 1.5rem; font-size: .75rem; color: #94a3b8; text-align: center; }
-  </style>
+  <title>Freelance Rate Calculator — free</title>
+  <meta name="description" content="Free freelance hourly rate calculator. Turn your income goal into a fair rate." />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="card">
-    <h1>Freelance Rate Calculator</h1>
-    <p class="lead">Find a fair hourly rate from your income goal. Free beginner tool.</p>
-    <p style="margin:0 0 1rem;font-size:.9rem"><a href="pricing.html" style="color:#2563eb">How freelancers price their work →</a></p>
-
-    <label for="goal">Yearly income goal ($)</label>
-    <input id="goal" type="number" value="60000" min="0" />
-
-    <label for="weeks">Weeks you’ll work per year</label>
-    <input id="weeks" type="number" value="48" min="1" max="52" />
-
-    <label for="hours">Billable hours per week</label>
-    <input id="hours" type="number" value="25" min="1" />
-
-    <label for="costs">Yearly business costs ($)</label>
-    <input id="costs" type="number" value="5000" min="0" />
-
-    <button type="button" id="go">Calculate my rate</button>
-
-    <div class="result" id="result">
-      <div>Suggested hourly rate</div>
-      <strong id="rate"></strong>
-      <p class="tip" id="tip"></p>
+  <div class="wrap">
+    <nav class="nav">
+      <span class="brand">RateLab</span>
+      <a href="index.html">Calculator</a>
+      <a href="pricing.html">Pricing guide</a>
+      <a href="hire.html">Hire / contact</a>
+    </nav>
+    <div class="card">
+      <span class="pill">FREE TOOL</span>
+      <h1>Freelance Rate Calculator</h1>
+      <p class="lead">Find a fair hourly rate from your income goal — then use the guide to quote real jobs.</p>
+      <div class="grid two">
+        <div>
+          <label for="goal">Yearly income goal ($)</label>
+          <input id="goal" type="number" value="60000" min="0" />
+        </div>
+        <div>
+          <label for="costs">Yearly business costs ($)</label>
+          <input id="costs" type="number" value="5000" min="0" />
+        </div>
+        <div>
+          <label for="weeks">Weeks worked / year</label>
+          <input id="weeks" type="number" value="48" min="1" max="52" />
+        </div>
+        <div>
+          <label for="hours">Billable hours / week</label>
+          <input id="hours" type="number" value="25" min="1" />
+        </div>
+      </div>
+      <button type="button" id="go">Calculate my rate</button>
+      <div class="result" id="result">
+        <div>Suggested hourly rate</div>
+        <strong id="rate"></strong>
+        <p class="tip" id="tip"></p>
+        <p class="tip"><a href="pricing.html">Next: how to turn this into a client quote →</a></p>
+      </div>
     </div>
+    <footer>RateLab · Built to learn & earn</footer>
   </div>
-  <footer>Built while learning to code · Money site v1</footer>
   <script>
     const $ = (id) => document.getElementById(id);
-    function calc() {
+    $("go").onclick = () => {
       const goal = +$("goal").value || 0;
       const weeks = +$("weeks").value || 1;
       const hours = +$("hours").value || 1;
       const costs = +$("costs").value || 0;
-      const total = goal + costs;
       const billable = weeks * hours;
-      const rate = billable ? total / billable : 0;
+      const rate = billable ? (goal + costs) / billable : 0;
       $("result").style.display = "block";
       $("rate").textContent = "$" + rate.toFixed(2) + " / hour";
-      $("tip").textContent = billable
-        ? `Based on ${billable} billable hours/year. Round up for taxes and unpaid admin time.`
-        : "Enter hours and weeks above.";
-    }
-    $("go").addEventListener("click", calc);
+      $("tip").textContent = `Based on ${billable} billable hours/year. Round up for tax & unpaid admin.`;
+    };
   </script>
 </body>
 </html>
