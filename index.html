@@ -6,20 +6,6 @@
   <title>PackEV — Every Pokemon TCG set + pack cost</title>
   <meta name="description" content="Browse every Pokemon TCG set, expand to see all cards with live prices, pack EV tools." />
   <link rel="stylesheet" href="styles.css" />
-  <style>
-    tr.set-row { cursor: pointer; }
-    tr.set-row:hover td { background: #0a1020; }
-    tr.set-row.open td { background: #172033; }
-    tr.expand-row td { padding: 0; background: #0a1020; border-bottom: 1px solid var(--line); }
-    .expand-inner { padding: .85rem; }
-    .mini-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:.55rem; max-height:520px; overflow:auto; }
-    .mini-card { background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
-    .mini-card img { width:100%; aspect-ratio:63/88; object-fit:cover; display:block; background:#111; }
-    .mini-card .m { padding:.45rem .5rem .55rem; font-size:.75rem; }
-    .mini-card .m strong { display:block; font-size:.78rem; line-height:1.2; }
-    .mini-card .price { color:#fde68a; font-weight:800; margin-top:.25rem; }
-    .expand-status { color:var(--muted); font-size:.85rem; margin:.4rem 0 .6rem; }
-  </style>
 </head>
 <body>
   <div class="wrap">
@@ -46,17 +32,25 @@
     </div>
     <footer>PackEV · Pokemon pack economics</footer>
   </div>
+  <script src="border.js"></script>
   <script>
     let sets = [];
     const rows = document.getElementById('rows');
     const seriesSel = document.getElementById('series');
-    const cache = {};
+    const cache = Object.create(null);
+    const inflight = Object.create(null);
+    const SELECT = 'id,name,number,rarity,images,tcgplayer,cardmarket';
 
     function money(n){ return '$' + Number(n).toFixed(2); }
     function priceOf(c){
       const t = c.tcgplayer && c.tcgplayer.prices;
       if (t){
         for (const k of ['holofoil','reverseHolofoil','normal','1stEditionHolofoil','1stEditionNormal']){
+          if (t[k] && (t[k].market != null || t[k].mid != null))
+            return { value: t[k].market ?? t[k].mid, currency:'USD' };
+        }
+        // any remaining print type
+        for (const k of Object.keys(t)){
           if (t[k] && (t[k].market != null || t[k].mid != null))
             return { value: t[k].market ?? t[k].mid, currency:'USD' };
         }
@@ -71,81 +65,223 @@
       return (p.currency==='EUR'?'€':'$') + Number(p.value).toFixed(2);
     }
 
-    async function loadCards(setId, statusEl, gridEl){
-      if (cache[setId]){ paint(cache[setId], statusEl, gridEl); return; }
-      statusEl.textContent = 'Loading cards from live API…';
-      let page=1, total=Infinity, cards=[];
-      try{
-        while(cards.length < total){
-          statusEl.textContent = `Loading… ${cards.length}${total<Infinity?' / '+total:''}`;
-          const url = `https://api.pokemontcg.io/v2/cards?q=set.id:${encodeURIComponent(setId)}&page=${page}&pageSize=250&orderBy=number`;
-          const res = await fetch(url, { headers:{ Accept:'application/json' }});
-          if(!res.ok) throw new Error('API '+res.status);
-          const json = await res.json();
-          const chunk = json.data||[];
-          total = json.totalCount || (cards.length+chunk.length);
-          cards = cards.concat(chunk);
-          if(!chunk.length) break;
-          page++;
-        }
-        cache[setId]=cards;
-        paint(cards, statusEl, gridEl);
-      }catch(e){
-        statusEl.textContent = 'Could not load cards: '+e.message+' (API may rate-limit — retry)';
+    function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+    async function fetchCardsPage(setId, page, attempt){
+      const url = 'https://api.pokemontcg.io/v2/cards'
+        + '?q=set.id:' + encodeURIComponent(setId)
+        + '&page=' + page
+        + '&pageSize=100'
+        + '&orderBy=number'
+        + '&select=' + SELECT;
+      const res = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (res.status === 429 || res.status >= 500) {
+        const err = new Error('API ' + res.status + (res.status === 429 ? ' (rate limited)' : ' (server error)'));
+        err.retryable = true;
+        throw err;
       }
+      if (!res.ok) {
+        const err = new Error('API ' + res.status);
+        err.retryable = false;
+        throw err;
+      }
+      return res.json();
     }
+
+    async function fetchCardsPageWithRetry(setId, page){
+      let lastErr;
+      for (let attempt = 0; attempt < 5; attempt++){
+        try {
+          return await fetchCardsPage(setId, page, attempt);
+        } catch (e) {
+          lastErr = e;
+          if (!e.retryable && attempt === 0 && e.message.indexOf('API') !== 0) {
+            // network error — retry
+          } else if (!e.retryable) {
+            throw e;
+          }
+          await sleep(500 * Math.pow(2, attempt) + Math.random() * 200);
+        }
+      }
+      throw lastErr;
+    }
+
+    async function fetchAllCards(setId, onProgress){
+      let page = 1, total = Infinity, cards = [];
+      while (cards.length < total) {
+        if (onProgress) onProgress(cards.length, total);
+        const json = await fetchCardsPageWithRetry(setId, page);
+        const chunk = json.data || [];
+        total = json.totalCount != null ? json.totalCount : (cards.length + chunk.length);
+        cards = cards.concat(chunk);
+        if (!chunk.length) break;
+        page++;
+        // gentle pacing between pages to avoid rate limits
+        if (cards.length < total) await sleep(250);
+      }
+      return cards;
+    }
+
     function paint(cards, statusEl, gridEl){
+      const setId = statusEl.dataset.setId;
       const priced = cards.map(priceOf).filter(Boolean).length;
-      statusEl.innerHTML = `${cards.length} cards · ${priced} with live prices · <a href="set.html?id=${encodeURIComponent(statusEl.dataset.setId)}">Open full page →</a>`;
-      gridEl.innerHTML = cards.map(c=>{
-        const img=(c.images&&(c.images.small||c.images.large))||'';
-        const p=priceOf(c);
-        return `<article class="mini-card"><img src="${img}" alt="${c.name}" loading="lazy" /><div class="m"><strong>${c.name}</strong><div class="tip">#${c.number||'?'} · ${c.rarity||'—'}</div><div class="price">${fmtPrice(p)}</div></div></article>`;
+      statusEl.classList.remove('expand-error');
+      statusEl.innerHTML = cards.length + ' cards · ' + priced + ' with live prices · '
+        + '<a href="set.html?id=' + encodeURIComponent(setId) + '">Open full page →</a>';
+      gridEl.innerHTML = cards.map(c => {
+        const img = (c.images && (c.images.small || c.images.large)) || '';
+        const p = priceOf(c);
+        const name = String(c.name || '').replace(/</g, '&lt;');
+        return '<article class="mini-card">'
+          + (img ? '<img src="' + img + '" alt="' + name + '" loading="lazy" />' : '<div style="aspect-ratio:63/88;background:#f1f5f9"></div>')
+          + '<div class="m"><strong>' + name + '</strong>'
+          + '<div class="tip">#' + (c.number || '?') + ' · ' + (c.rarity || '—') + '</div>'
+          + '<div class="price">' + fmtPrice(p) + '</div></div></article>';
       }).join('');
     }
 
-    function render(){
-      const q=document.getElementById('q').value.toLowerCase();
-      const ser=seriesSel.value;
-      const list=sets.filter(s=>(!ser||s.series===ser)&&(s.name+s.series+s.id).toLowerCase().includes(q));
-      rows.innerHTML='';
-      list.forEach(s=>{
-        const tr=document.createElement('tr');
-        tr.className='set-row';
-        tr.dataset.id=s.id;
-        tr.innerHTML=`<td><strong>${s.name}</strong><div class="tip">${s.id}</div></td>
-          <td>${s.series||'—'}</td><td>${s.releaseDate||'—'}</td><td>${s.cardCount||'—'}</td>
-          <td><a href="${s.ebaySoldUrl||'#'}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${s.ebayLastSoldUsd!=null?money(s.ebayLastSoldUsd):'View last sold →'}</a></td>`;
-        const exp=document.createElement('tr');
-        exp.className='expand-row';
-        exp.style.display='none';
-        exp.innerHTML=`<td colspan="5"><div class="expand-inner"><div class="expand-status" data-set-id="${s.id}">Click to load…</div><div class="mini-grid"></div></div></td>`;
-        tr.onclick=()=>{
-          const open=exp.style.display!=='none';
-          document.querySelectorAll('tr.expand-row').forEach(r=>r.style.display='none');
-          document.querySelectorAll('tr.set-row').forEach(r=>r.classList.remove('open'));
-          if(open) return;
-          tr.classList.add('open');
-          exp.style.display='table-row';
-          const statusEl=exp.querySelector('.expand-status');
-          const gridEl=exp.querySelector('.mini-grid');
-          loadCards(s.id, statusEl, gridEl);
+    function showError(statusEl, gridEl, setId, message){
+      statusEl.classList.add('expand-error');
+      statusEl.innerHTML = 'Could not load cards: ' + message
+        + '. The Pokemon TCG API is often flaky — try again.'
+        + ' <button type="button" class="retry-btn">Retry</button>';
+      const btn = statusEl.querySelector('.retry-btn');
+      if (btn) {
+        btn.onclick = function (e) {
+          e.stopPropagation();
+          delete cache[setId];
+          delete inflight[setId];
+          loadCards(setId, statusEl, gridEl);
         };
+      }
+    }
+
+    async function loadCards(setId, statusEl, gridEl){
+      if (cache[setId]) {
+        paint(cache[setId], statusEl, gridEl);
+        return;
+      }
+      // Reuse in-flight request (avoids race / double fetch)
+      if (inflight[setId]) {
+        statusEl.classList.remove('expand-error');
+        statusEl.textContent = 'Loading cards from live API…';
+        try {
+          const cards = await inflight[setId];
+          if (statusEl.dataset.setId === setId) paint(cards, statusEl, gridEl);
+        } catch (e) {
+          if (statusEl.dataset.setId === setId) showError(statusEl, gridEl, setId, e.message);
+        }
+        return;
+      }
+
+      statusEl.classList.remove('expand-error');
+      statusEl.textContent = 'Loading cards from live API…';
+      gridEl.innerHTML = '';
+
+      const promise = fetchAllCards(setId, function (n, total) {
+        if (statusEl.dataset.setId !== setId) return;
+        statusEl.textContent = 'Loading… ' + n + (total < Infinity ? ' / ' + total : '');
+      });
+      inflight[setId] = promise;
+
+      try {
+        const cards = await promise;
+        cache[setId] = cards;
+        try {
+          sessionStorage.setItem('packev-cards-' + setId, JSON.stringify(cards));
+        } catch (_) { /* quota — memory cache still works */ }
+        if (statusEl.dataset.setId === setId) paint(cards, statusEl, gridEl);
+      } catch (e) {
+        if (statusEl.dataset.setId === setId) showError(statusEl, gridEl, setId, e.message);
+      } finally {
+        delete inflight[setId];
+      }
+    }
+
+    function trySessionCache(setId){
+      if (cache[setId]) return cache[setId];
+      try {
+        const raw = sessionStorage.getItem('packev-cards-' + setId);
+        if (raw) {
+          const cards = JSON.parse(raw);
+          if (Array.isArray(cards) && cards.length) {
+            cache[setId] = cards;
+            return cards;
+          }
+        }
+      } catch (_) {}
+      return null;
+    }
+
+    function render(){
+      const q = document.getElementById('q').value.toLowerCase();
+      const ser = seriesSel.value;
+      const list = sets.filter(s =>
+        (!ser || s.series === ser) && (s.name + s.series + s.id).toLowerCase().includes(q)
+      );
+      const openId = (document.querySelector('tr.set-row.open') || {}).dataset
+        ? document.querySelector('tr.set-row.open').dataset.id
+        : null;
+      rows.innerHTML = '';
+      list.forEach(s => {
+        const tr = document.createElement('tr');
+        tr.className = 'set-row';
+        tr.dataset.id = s.id;
+        tr.innerHTML = '<td><strong>' + s.name + '</strong><div class="tip">' + s.id + '</div></td>'
+          + '<td>' + (s.series || '—') + '</td><td>' + (s.releaseDate || '—') + '</td><td>' + (s.cardCount || '—') + '</td>'
+          + '<td><a href="' + (s.ebaySoldUrl || '#') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">'
+          + (s.ebayLastSoldUsd != null ? money(s.ebayLastSoldUsd) : 'View last sold →') + '</a></td>';
+
+        const exp = document.createElement('tr');
+        exp.className = 'expand-row';
+        exp.style.display = 'none';
+        exp.innerHTML = '<td colspan="5"><div class="expand-inner">'
+          + '<div class="expand-status" data-set-id="' + s.id + '">Click to load…</div>'
+          + '<div class="mini-grid"></div></div></td>';
+
+        tr.onclick = function () {
+          const wasOpen = exp.style.display !== 'none';
+          document.querySelectorAll('tr.expand-row').forEach(r => { r.style.display = 'none'; });
+          document.querySelectorAll('tr.set-row').forEach(r => r.classList.remove('open'));
+          if (wasOpen) return;
+          tr.classList.add('open');
+          exp.style.display = 'table-row';
+          const statusEl = exp.querySelector('.expand-status');
+          const gridEl = exp.querySelector('.mini-grid');
+          const cached = trySessionCache(s.id);
+          if (cached) paint(cached, statusEl, gridEl);
+          else loadCards(s.id, statusEl, gridEl);
+        };
+
         rows.appendChild(tr);
         rows.appendChild(exp);
+
+        if (openId && openId === s.id) {
+          tr.classList.add('open');
+          exp.style.display = 'table-row';
+          const statusEl = exp.querySelector('.expand-status');
+          const gridEl = exp.querySelector('.mini-grid');
+          const cached = trySessionCache(s.id);
+          if (cached) paint(cached, statusEl, gridEl);
+          else loadCards(s.id, statusEl, gridEl);
+        }
       });
     }
 
-    fetch('data/sets.json').then(r=>r.json()).then(data=>{
-      sets=data;
-      document.getElementById('count').textContent=sets.length;
-      [...new Set(sets.map(s=>s.series).filter(Boolean))].sort().forEach(s=>{
-        const o=document.createElement('option'); o.value=s; o.textContent=s; seriesSel.appendChild(o);
+    fetch('data/sets.json').then(r => r.json()).then(data => {
+      sets = data;
+      document.getElementById('count').textContent = sets.length;
+      [...new Set(sets.map(s => s.series).filter(Boolean))].sort().forEach(s => {
+        const o = document.createElement('option');
+        o.value = s; o.textContent = s; seriesSel.appendChild(o);
       });
       render();
+    }).catch(e => {
+      document.getElementById('count').textContent = '0';
+      rows.innerHTML = '<tr><td colspan="5">Could not load set list: ' + e.message + '</td></tr>';
     });
-    document.getElementById('q').oninput=render;
-    seriesSel.onchange=render;
+    document.getElementById('q').oninput = render;
+    seriesSel.onchange = render;
   </script>
 </body>
 </html>

@@ -52,8 +52,8 @@
     const setId = params.get('id');
     const $ = id => document.getElementById(id);
     let cards = [];
+    const SELECT = 'id,name,number,rarity,images,tcgplayer,cardmarket';
 
-    // Estimated pull chance labels by rarity (educational averages for modern English booster modelling)
     const ODDS = {
       'Common': 'Common — often ~ several per pack',
       'Uncommon': 'Uncommon — usually 2–3 / pack',
@@ -86,6 +86,10 @@
           if (t[k] && (t[k].market != null || t[k].mid != null))
             return { value: t[k].market ?? t[k].mid, source: 'TCGPlayer ' + k, currency: 'USD' };
         }
+        for (const k of Object.keys(t)) {
+          if (t[k] && (t[k].market != null || t[k].mid != null))
+            return { value: t[k].market ?? t[k].mid, source: 'TCGPlayer ' + k, currency: 'USD' };
+        }
       }
       const cm = c.cardmarket && c.cardmarket.prices;
       if (cm && (cm.averageSellPrice != null || cm.trendPrice != null))
@@ -97,6 +101,28 @@
       if (!p) return 'No live price';
       const sym = p.currency === 'EUR' ? '€' : '$';
       return sym + Number(p.value).toFixed(2) + ' · ' + p.source;
+    }
+
+    function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+    async function fetchJsonWithRetry(url) {
+      let lastErr;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          const res = await fetch(url, { headers: { Accept: 'application/json' } });
+          if (res.status === 429 || res.status >= 500) {
+            lastErr = new Error('API ' + res.status);
+            await sleep(500 * Math.pow(2, attempt) + Math.random() * 200);
+            continue;
+          }
+          if (!res.ok) throw new Error('API ' + res.status);
+          return await res.json();
+        } catch (e) {
+          lastErr = e;
+          await sleep(500 * Math.pow(2, attempt) + Math.random() * 200);
+        }
+      }
+      throw lastErr;
     }
 
     function render() {
@@ -117,10 +143,11 @@
       $('grid').innerHTML = list.map(c => {
         const img = (c.images && (c.images.small || c.images.large)) || '';
         const p = priceOf(c);
+        const name = String(c.name||'').replace(/</g,'&lt;');
         return `<article class="poke-card">
-          <img src="${img}" alt="${c.name}" loading="lazy" />
+          ${img ? `<img src="${img}" alt="${name}" loading="lazy" />` : '<div style="aspect-ratio:63/88;background:#f8fafc"></div>'}
           <div class="meta">
-            <strong>${c.name}</strong>
+            <strong>${name}</strong>
             <div class="sub">#${c.number||'?'} · ${c.rarity||'—'}</div>
             <div class="price">${money(p)}</div>
             <div class="odds">${rarityOdds(c.rarity)}</div>
@@ -141,40 +168,45 @@
         return;
       }
       $('ripLink').href = 'rip.html?set=' + encodeURIComponent(setId);
-      let page = 1, total = Infinity;
-      const UA = { headers: { 'Accept': 'application/json' } };
       try {
-        // set meta
-        const setRes = await fetch('https://api.pokemontcg.io/v2/sets/' + encodeURIComponent(setId), UA);
-        if (setRes.ok) {
-          const setJson = await setRes.json();
+        try {
+          const setJson = await fetchJsonWithRetry('https://api.pokemontcg.io/v2/sets/' + encodeURIComponent(setId));
           const s = setJson.data;
           $('title').textContent = s.name;
           document.title = s.name + ' — PackEV';
           $('lead').textContent = (s.series||'') + ' · released ' + (s.releaseDate||'?') + ' · ' + (s.printedTotal||s.total||'?') + ' cards';
-        } else {
+        } catch (_) {
           $('title').textContent = setId;
         }
+
+        let page = 1, total = Infinity;
+        cards = [];
         while (cards.length < total) {
-          $('status').textContent = 'Loading cards… page ' + page + ' (' + cards.length + ' so far)';
-          const url = 'https://api.pokemontcg.io/v2/cards?q=set.id:' + encodeURIComponent(setId) + '&page=' + page + '&pageSize=250&orderBy=number';
-          const res = await fetch(url, UA);
-          if (!res.ok) throw new Error('API ' + res.status);
-          const json = await res.json();
+          $('status').textContent = 'Loading cards… ' + cards.length + (total < Infinity ? ' / ' + total : '');
+          const url = 'https://api.pokemontcg.io/v2/cards?q=set.id:' + encodeURIComponent(setId)
+            + '&page=' + page + '&pageSize=100&orderBy=number&select=' + SELECT;
+          const json = await fetchJsonWithRetry(url);
           const chunk = json.data || [];
-          total = json.totalCount || (cards.length + chunk.length);
+          total = json.totalCount != null ? json.totalCount : (cards.length + chunk.length);
           cards = cards.concat(chunk);
           if (!chunk.length) break;
           page++;
+          if (cards.length < total) await sleep(250);
         }
         const rarities = [...new Set(cards.map(c => c.rarity).filter(Boolean))].sort();
+        $('rarity').innerHTML = '<option value="">All rarities</option>';
         rarities.forEach(r => {
           const o = document.createElement('option'); o.value = r; o.textContent = r; $('rarity').appendChild(o);
         });
-        $('status').textContent = 'Loaded ' + cards.length + ' cards with live images/prices where available.';
+        $('status').innerHTML = 'Loaded ' + cards.length + ' cards with live images/prices where available.'
+          + ' <button type="button" class="retry-btn" id="reloadBtn">Reload</button>';
+        $('reloadBtn').onclick = () => { cards = []; loadAll(); };
         render();
       } catch (e) {
-        $('status').textContent = 'Live API error: ' + e.message + '. Try refresh; the Pokemon TCG API can rate-limit.';
+        $('status').innerHTML = 'Live API error: ' + e.message
+          + '. The Pokemon TCG API can rate-limit or return 5xx. '
+          + '<button type="button" class="retry-btn" id="retryBtn">Retry</button>';
+        $('retryBtn').onclick = () => { cards = []; loadAll(); };
       }
     }
     $('q').oninput = render;
@@ -182,5 +214,6 @@
     $('rarity').onchange = render;
     loadAll();
   </script>
+  <script src="border.js"></script>
 </body>
 </html>
