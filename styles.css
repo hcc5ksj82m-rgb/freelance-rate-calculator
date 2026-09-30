@@ -169,3 +169,18 @@ td .sub{color:var(--muted);font-size:.72rem;margin-top:.1rem}
 .card-hit:focus{outline:2px solid #f59e0b;outline-offset:2px}
 .mini-card .set-of{margin-top:.2rem}
 .mini-card .set-of a{font-weight:650}
+
+/* Auth / members */
+.auth-nav{display:inline-flex;gap:.85rem;align-items:center;margin-left:.25rem}
+.auth-nav a{font-weight:650}
+.auth-card{max-width:440px;margin-left:auto;margin-right:auto}
+.auth-form label{margin-top:.85rem}
+.auth-form button:disabled,.btn:disabled{
+  opacity:.55;cursor:not-allowed;filter:none;
+}
+.auth-msg{margin:.85rem 0 0;padding:.65rem .75rem;border-radius:12px;font-size:.88rem}
+.auth-msg.ok{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.auth-msg.err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.auth-msg.warn{background:var(--warn-bg);color:var(--warn-text);border:1px solid var(--warn-border)}
+.auth-setup code{font-size:.78rem;background:#fff;padding:.1rem .35rem;border-radius:6px;border:1px solid var(--line)}
+button:disabled{opacity:.55;cursor:not-allowed;filter:none}

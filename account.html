@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Account — PackEV</title>
+  <meta name="description" content="Your PackEV member profile." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <nav class="nav">
+      <span class="brand">PackEV</span>
+      <a href="index.html">Sets</a>
+      <a href="prices.html">Prices</a>
+      <a href="rip.html">Pack EV</a>
+      <a href="about.html">About</a>
+      <span id="auth-nav" class="auth-nav">
+        <a href="join.html">Join</a>
+        <a href="login.html">Log in</a>
+      </span>
+    </nav>
+    <div class="card auth-card">
+      <span class="pill">PROFILE</span>
+      <h1>Your account</h1>
+      <p class="lead">Profile stub — display name only. Members can read/update their own row; nobody can write site files from the browser.</p>
+      <div id="auth-config-banner"></div>
+      <div id="account-panel">
+        <div class="stats" style="grid-template-columns:1fr">
+          <div class="stat">
+            <span class="sub">Signed in as</span>
+            <b id="acct-email">…</b>
+          </div>
+        </div>
+        <form id="profile-form" class="auth-form">
+          <label for="acct-name">Display name</label>
+          <input id="acct-name" name="display_name" type="text" maxlength="80" placeholder="Trainer name" />
+          <button type="submit">Save profile</button>
+        </form>
+        <p id="auth-form-msg" class="auth-msg" hidden></p>
+        <p class="tip"><a href="#" id="acct-signout">Log out</a> · <a href="AUTH.md">How member security works</a></p>
+      </div>
+    </div>
+    <footer>PackEV</footer>
+  </div>
+  <script src="border.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>
