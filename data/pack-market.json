@@ -1,0 +1,7 @@
+{
+  "source": "ebay_sold",
+  "status": "links_ready_api_pending",
+  "note": "Official eBay last-sold API (Marketplace Insights) needs business approval. Until credentials exist, each set links to live eBay Sold results. Do not use release-era MSRP as market.",
+  "updated": null,
+  "packs": {}
+}

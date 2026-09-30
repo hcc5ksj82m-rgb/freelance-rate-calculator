@@ -20,16 +20,16 @@
       <span class="pill">POKEMON ONLY</span>
       <h1>Every Pokemon TCG set</h1>
       <p class="lead">Loaded <strong id="count">176</strong> sets from the Pokemon TCG API. Search, sort, and jump into pack EV.</p>
-      <div class="warn">Pack MSRP values are era estimates for planning — shops charge more. Card prices on the Prices page are demo until live feeds are wired.</div>
+      <div class="warn">Pack column opens live eBay Sold/Completed results for that booster pack (recent last-sold market), not the old release MSRP. Auto-filling exact sold $ needs an approved eBay sold-data API.</div>
       <div class="grid two">
         <div><label>Search sets</label><input id="q" type="search" placeholder="Base, Evolving Skies, Prismatic..." /></div>
         <div><label>Series filter</label><select id="series"><option value="">All series</option></select></div>
       </div>
       <table>
-        <thead><tr><th>Set</th><th>Series</th><th>Released</th><th>Cards</th><th>Pack MSRP*</th></tr></thead>
+        <thead><tr><th>Set</th><th>Series</th><th>Released</th><th>Cards</th><th>eBay last sold</th></tr></thead>
         <tbody id="rows"></tbody>
       </table>
-      <p class="tip">*Estimated USD pack MSRP by era for EV maths — not a store quote.</p>
+      <p class="tip">Click “View last sold” for real eBay completed sales. Median $ auto-fill comes next once eBay sold API access is connected.</p>
     </div>
     <footer>PackEV · Pokemon pack economics</footer>
   </div>
@@ -47,7 +47,10 @@
         <td>${s.series||'—'}</td>
         <td>${s.releaseDate||'—'}</td>
         <td>${s.cardCount||'—'}</td>
-        <td><a href="rip.html?set=${encodeURIComponent(s.id)}">${money(s.packMsrpUsd)}</a></td>
+        <td>
+          <a href="${s.ebaySoldUrl}" target="_blank" rel="noopener">${s.ebayLastSoldUsd!=null ? money(s.ebayLastSoldUsd) : 'View last sold →'}</a>
+          <div class="tip">not release MSRP</div>
+        </td>
       </tr>`).join('');
     }
     fetch('data/sets.json').then(r=>r.json()).then(data => {
