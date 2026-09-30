@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pack rip EV calculator — PackEV</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <nav class="nav">
+      <span class="brand">PackEV</span>
+      <a href="index.html">Sets</a>
+      <a href="prices.html">Prices</a>
+      <a href="rip.html">Pack EV</a>
+      <a href="about.html">About</a>
+    </nav>
+    <div class="card">
+      <span class="pill">EV TOOL</span>
+      <h1>Cost of ripping packs</h1>
+      <p class="lead">Expected value vs pack cost. Pick a set, enter what you pay, and model chase-hit odds.</p>
+      <div class="warn">Educational model — real pull rates and secondary prices vary. Gambling risk: most rips lose vs sealed.</div>
+      <div class="grid two">
+        <div>
+          <label>Set</label>
+          <select id="set"></select>
+        </div>
+        <div>
+          <label>What you pay per pack ($)</label>
+          <input id="cost" type="number" step="0.01" value="5.99" />
+        </div>
+        <div>
+          <label>Packs you will rip</label>
+          <input id="packs" type="number" value="36" min="1" />
+        </div>
+        <div>
+          <label>Avg value of “dead” pack ($)</label>
+          <input id="dead" type="number" step="0.01" value="1.20" />
+        </div>
+        <div>
+          <label>Chase hit rate (1 in X packs)</label>
+          <input id="odds" type="number" value="72" min="1" />
+        </div>
+        <div>
+          <label>Avg chase card value ($)</label>
+          <input id="chase" type="number" step="0.01" value="85" />
+        </div>
+      </div>
+      <button type="button" id="go">Calculate rip EV</button>
+      <div class="result" id="result">
+        <div class="stats">
+          <div class="stat"><span class="tip">EV / pack</span><b id="evp"></b></div>
+          <div class="stat"><span class="tip">Total EV</span><b id="evt"></b></div>
+          <div class="stat"><span class="tip">Expected profit</span><b id="profit"></b></div>
+        </div>
+        <p class="tip" id="tip"></p>
+      </div>
+    </div>
+    <footer>PackEV</footer>
+  </div>
+  <script>
+    const $ = id => document.getElementById(id);
+    const params = new URLSearchParams(location.search);
+    fetch('data/sets.json').then(r=>r.json()).then(sets => {
+      const sel = $('set');
+      sets.slice().reverse().forEach(s => {
+        const o=document.createElement('option');
+        o.value=s.id; o.textContent=`${s.name} (${s.releaseDate||'?'}) · MSRP ~$${s.packMsrpUsd}`;
+        o.dataset.msrp=s.packMsrpUsd;
+        sel.appendChild(o);
+      });
+      if (params.get('set')) sel.value = params.get('set');
+      const opt = sel.selectedOptions[0];
+      if (opt) $('cost').value = (Number(opt.dataset.msrp)+1).toFixed(2);
+      sel.onchange = () => {
+        const o=sel.selectedOptions[0];
+        if (o) $('cost').value=(Number(o.dataset.msrp)+1).toFixed(2);
+      };
+    });
+    $('go').onclick = () => {
+      const cost=+$('cost').value, packs=+$('packs').value, dead=+$('dead').value;
+      const odds=+$('odds').value, chase=+$('chase').value;
+      const pHit = 1/Math.max(odds,1);
+      const evPack = dead*(1-pHit) + chase*pHit;
+      const totalEv = evPack*packs;
+      const spend = cost*packs;
+      const profit = totalEv - spend;
+      $('result').style.display='block';
+      $('evp').textContent='$'+evPack.toFixed(2);
+      $('evt').textContent='$'+totalEv.toFixed(2);
+      $('profit').textContent=(profit>=0?'+$':'-$')+Math.abs(profit).toFixed(2);
+      $('tip').textContent = `Spend $${spend.toFixed(2)} ripping ${packs} packs of ${$('set').selectedOptions[0]?.textContent.split(' (')[0]||'this set'}. Hit chance ~${(pHit*100).toFixed(2)}% per pack.`;
+    };
+  </script>
+</body>
+</html>

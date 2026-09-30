@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pokemon card price chart — PackEV</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <nav class="nav">
+      <span class="brand">PackEV</span>
+      <a href="index.html">Sets</a>
+      <a href="prices.html">Prices</a>
+      <a href="rip.html">Pack EV</a>
+      <a href="about.html">About</a>
+    </nav>
+    <div class="card">
+      <span class="pill">CHART</span>
+      <h1>Pokemon card market values</h1>
+      <p class="lead">Demo NM prices for popular chase cards. Daily updates will expand coverage set-by-set.</p>
+      <div class="warn">Not live market prices yet. Cross-check TCGPlayer / PriceCharting before buying or selling.</div>
+      <div class="chart" id="chart"></div>
+      <label>Search</label>
+      <input id="q" type="search" placeholder="Charizard, Umbreon..." />
+      <table>
+        <thead><tr><th>Card</th><th>Set</th><th>NM (demo)</th><th>Rarity</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p class="tip"><a href="rip.html">Estimate pack rip EV →</a></p>
+    </div>
+    <footer>PackEV</footer>
+  </div>
+  <script>
+    let cards=[];
+    function fmt(n){return n>=1000?'$'+n.toLocaleString(undefined,{maximumFractionDigits:0}):'$'+n.toFixed(2)}
+    function render(list){
+      const max=Math.max(...list.map(c=>c.price),1);
+      document.getElementById('chart').innerHTML=list.slice(0,8).map(c=>{
+        const h=Math.max(8,Math.round((c.price/max)*140));
+        return `<div class="bar-wrap"><div class="bar" style="height:${h}px"></div><div class="bar-label">${c.name.split(' ')[0]}</div></div>`;
+      }).join('');
+      document.getElementById('rows').innerHTML=list.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.set}</td><td>${fmt(c.price)}</td><td>${c.rarity}</td></tr>`).join('');
+    }
+    fetch('data/demo-cards.json').then(r=>r.json()).then(d=>{cards=d;render(cards)});
+    document.getElementById('q').oninput=e=>{
+      const q=e.target.value.toLowerCase();
+      render(cards.filter(c=>(c.name+c.set).toLowerCase().includes(q)));
+    };
+  </script>
+</body>
+</html>

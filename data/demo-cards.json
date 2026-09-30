@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Charizard ex",
+    "set": "Obsidian Flames",
+    "price": 48.5,
+    "rarity": "Double Rare"
+  },
+  {
+    "name": "Umbreon VMAX",
+    "set": "Evolving Skies",
+    "price": 185,
+    "rarity": "Secret"
+  },
+  {
+    "name": "Pikachu VMAX",
+    "set": "Vivid Voltage",
+    "price": 62,
+    "rarity": "VMAX"
+  },
+  {
+    "name": "Iono SIR",
+    "set": "Paldea Evolved",
+    "price": 95,
+    "rarity": "Special Illustration"
+  },
+  {
+    "name": "Moonbreon",
+    "set": "Evolving Skies",
+    "price": 310,
+    "rarity": "Alt Art"
+  },
+  {
+    "name": "Giratina VSTAR",
+    "set": "Lost Origin",
+    "price": 41.2,
+    "rarity": "VSTAR"
+  },
+  {
+    "name": "Mewtwo VSTAR",
+    "set": "Pokemon GO",
+    "price": 22.4,
+    "rarity": "VSTAR"
+  },
+  {
+    "name": "Base Charizard",
+    "set": "Base Set",
+    "price": 4200,
+    "rarity": "Holo Rare"
+  }
+]
