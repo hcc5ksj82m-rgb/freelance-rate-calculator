@@ -33,3 +33,15 @@ footer{text-align:center;color:#64748b;font-size:.75rem;margin:1.2rem 0}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin:.8rem 0}
 .stat{background:#0a1020;border:1px solid var(--line);border-radius:12px;padding:.7rem;text-align:center}
 .stat b{display:block;font-size:1.15rem}
+
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.75rem;margin-top:1rem}
+.poke-card{background:#0a1020;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.poke-card img{width:100%;aspect-ratio:63/88;object-fit:cover;background:#111;display:block}
+.poke-card .meta{padding:.55rem .6rem .7rem}
+.poke-card .meta strong{display:block;font-size:.82rem;line-height:1.25}
+.poke-card .meta .sub{color:var(--muted);font-size:.72rem;margin-top:.15rem}
+.price{color:#fde68a;font-weight:800;font-size:.9rem;margin-top:.35rem}
+.odds{color:#93c5fd;font-size:.72rem;margin-top:.2rem}
+.toolbar{display:flex;gap:.5rem;flex-wrap:wrap;align-items:end;margin:.5rem 0}
+.toolbar > div{flex:1;min-width:140px}
+.loading{color:var(--muted);padding:1rem 0}

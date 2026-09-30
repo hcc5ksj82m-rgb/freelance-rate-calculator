@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Set cards — PackEV</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <nav class="nav">
+      <span class="brand">PackEV</span>
+      <a href="index.html">Sets</a>
+      <a href="prices.html">Prices</a>
+      <a href="rip.html">Pack EV</a>
+      <a href="about.html">About</a>
+    </nav>
+    <div class="card">
+      <p class="tip"><a href="index.html">← All sets</a></p>
+      <span class="pill">LIVE FEED</span>
+      <h1 id="title">Loading set…</h1>
+      <p class="lead" id="lead"></p>
+      <div class="warn">
+        Card images + market prices load live from the Pokemon TCG API (TCGPlayer / Cardmarket when present).
+        Pull odds are <strong>estimated by rarity</strong> (not official sealed odds — those are unpublished for most sets).
+      </div>
+      <div class="stats" id="stats" style="display:none">
+        <div class="stat"><span class="tip">Cards loaded</span><b id="nCards">0</b></div>
+        <div class="stat"><span class="tip">With a price</span><b id="nPriced">0</b></div>
+        <div class="stat"><span class="tip">Sum of listed NM</span><b id="sumPrice">$0</b></div>
+      </div>
+      <div class="toolbar">
+        <div><label>Search</label><input id="q" type="search" placeholder="Name or number" /></div>
+        <div><label>Sort</label>
+          <select id="sort">
+            <option value="number">Set number</option>
+            <option value="price-desc">Price high → low</option>
+            <option value="price-asc">Price low → high</option>
+            <option value="name">Name</option>
+          </select>
+        </div>
+        <div><label>Rarity</label><select id="rarity"><option value="">All rarities</option></select></div>
+      </div>
+      <p class="loading" id="status">Fetching cards from live API…</p>
+      <div class="card-grid" id="grid"></div>
+      <p class="tip" style="margin-top:1rem"><a id="ripLink" href="rip.html">Open pack EV for this set →</a></p>
+    </div>
+    <footer>PackEV · Live Pokemon TCG data</footer>
+  </div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const setId = params.get('id');
+    const $ = id => document.getElementById(id);
+    let cards = [];
+
+    // Estimated pull chance labels by rarity (educational averages for modern English booster modelling)
+    const ODDS = {
+      'Common': 'Common — often ~ several per pack',
+      'Uncommon': 'Uncommon — usually 2–3 / pack',
+      'Rare': 'Rare — about 1 / pack',
+      'Rare Holo': 'Holo rare — roughly ~1 in 3–6 packs (varies)',
+      'Rare Holo EX': 'EX/Holo — scarce; often ~1 in several packs',
+      'Rare Ultra': 'Ultra Rare — often ~1 in 6–12 packs',
+      'Rare Secret': 'Secret Rare — often ~1 in 40–100+ packs',
+      'Rare Rainbow': 'Rainbow — chase; often ~1 in 60–150 packs',
+      'Rare Shiny': 'Shiny rare — chase odds, set-dependent',
+      'Illustration Rare': 'Illustration Rare — commonly ~1 in ~12–20 packs',
+      'Special Illustration Rare': 'SIR — chase; often ~1 in ~40–90 packs',
+      'Hyper Rare': 'Hyper Rare — gold chase; often ~1 in ~80–160 packs',
+      'Double Rare': 'Double Rare — often ~1 in ~6–10 packs',
+      'ACE SPEC Rare': 'ACE SPEC — usually ~1 per ETB-scale product odds',
+      'Promo': 'Promo — not from normal boosters',
+    };
+
+    function rarityOdds(r) {
+      if (!r) return 'Odds unknown';
+      if (ODDS[r]) return ODDS[r];
+      const key = Object.keys(ODDS).find(k => r.toLowerCase().includes(k.toLowerCase()));
+      return key ? ODDS[key] : (r + ' — odds unpublished; rarity-based estimate only');
+    }
+
+    function priceOf(c) {
+      const t = c.tcgplayer && c.tcgplayer.prices;
+      if (t) {
+        for (const k of ['holofoil','reverseHolofoil','normal','1stEditionHolofoil','1stEditionNormal']) {
+          if (t[k] && (t[k].market != null || t[k].mid != null))
+            return { value: t[k].market ?? t[k].mid, source: 'TCGPlayer ' + k, currency: 'USD' };
+        }
+      }
+      const cm = c.cardmarket && c.cardmarket.prices;
+      if (cm && (cm.averageSellPrice != null || cm.trendPrice != null))
+        return { value: cm.averageSellPrice ?? cm.trendPrice, source: 'Cardmarket', currency: 'EUR' };
+      return null;
+    }
+
+    function money(p) {
+      if (!p) return 'No live price';
+      const sym = p.currency === 'EUR' ? '€' : '$';
+      return sym + Number(p.value).toFixed(2) + ' · ' + p.source;
+    }
+
+    function render() {
+      const q = $('q').value.toLowerCase();
+      const rar = $('rarity').value;
+      const sort = $('sort').value;
+      let list = cards.filter(c => {
+        const hay = (c.name + ' ' + (c.number||'') + ' ' + (c.rarity||'')).toLowerCase();
+        return (!q || hay.includes(q)) && (!rar || c.rarity === rar);
+      });
+      list.sort((a,b) => {
+        const pa = priceOf(a)?.value ?? -1, pb = priceOf(b)?.value ?? -1;
+        if (sort === 'price-desc') return pb - pa;
+        if (sort === 'price-asc') return (pa<0?1e15:pa) - (pb<0?1e15:pb);
+        if (sort === 'name') return a.name.localeCompare(b.name);
+        return String(a.number).localeCompare(String(b.number), undefined, {numeric:true});
+      });
+      $('grid').innerHTML = list.map(c => {
+        const img = (c.images && (c.images.small || c.images.large)) || '';
+        const p = priceOf(c);
+        return `<article class="poke-card">
+          <img src="${img}" alt="${c.name}" loading="lazy" />
+          <div class="meta">
+            <strong>${c.name}</strong>
+            <div class="sub">#${c.number||'?'} · ${c.rarity||'—'}</div>
+            <div class="price">${money(p)}</div>
+            <div class="odds">${rarityOdds(c.rarity)}</div>
+          </div>
+        </article>`;
+      }).join('');
+      const priced = cards.map(priceOf).filter(Boolean);
+      $('nCards').textContent = cards.length;
+      $('nPriced').textContent = priced.length;
+      const sum = priced.reduce((a,p)=>a+Number(p.value),0);
+      $('sumPrice').textContent = '$' + sum.toFixed(0);
+      $('stats').style.display = 'grid';
+    }
+
+    async function loadAll() {
+      if (!setId) {
+        $('status').textContent = 'Missing set id. Go back to Sets.';
+        return;
+      }
+      $('ripLink').href = 'rip.html?set=' + encodeURIComponent(setId);
+      let page = 1, total = Infinity;
+      const UA = { headers: { 'Accept': 'application/json' } };
+      try {
+        // set meta
+        const setRes = await fetch('https://api.pokemontcg.io/v2/sets/' + encodeURIComponent(setId), UA);
+        if (setRes.ok) {
+          const setJson = await setRes.json();
+          const s = setJson.data;
+          $('title').textContent = s.name;
+          document.title = s.name + ' — PackEV';
+          $('lead').textContent = (s.series||'') + ' · released ' + (s.releaseDate||'?') + ' · ' + (s.printedTotal||s.total||'?') + ' cards';
+        } else {
+          $('title').textContent = setId;
+        }
+        while (cards.length < total) {
+          $('status').textContent = 'Loading cards… page ' + page + ' (' + cards.length + ' so far)';
+          const url = 'https://api.pokemontcg.io/v2/cards?q=set.id:' + encodeURIComponent(setId) + '&page=' + page + '&pageSize=250&orderBy=number';
+          const res = await fetch(url, UA);
+          if (!res.ok) throw new Error('API ' + res.status);
+          const json = await res.json();
+          const chunk = json.data || [];
+          total = json.totalCount || (cards.length + chunk.length);
+          cards = cards.concat(chunk);
+          if (!chunk.length) break;
+          page++;
+        }
+        const rarities = [...new Set(cards.map(c => c.rarity).filter(Boolean))].sort();
+        rarities.forEach(r => {
+          const o = document.createElement('option'); o.value = r; o.textContent = r; $('rarity').appendChild(o);
+        });
+        $('status').textContent = 'Loaded ' + cards.length + ' cards with live images/prices where available.';
+        render();
+      } catch (e) {
+        $('status').textContent = 'Live API error: ' + e.message + '. Try refresh; the Pokemon TCG API can rate-limit.';
+      }
+    }
+    $('q').oninput = render;
+    $('sort').onchange = render;
+    $('rarity').onchange = render;
+    loadAll();
+  </script>
+</body>
+</html>

@@ -43,7 +43,7 @@
       const ser = seriesSel.value;
       const list = sets.filter(s => (!ser || s.series===ser) && (s.name+s.series+s.id).toLowerCase().includes(q));
       rows.innerHTML = list.map(s => `<tr>
-        <td><strong>${s.name}</strong><div class="tip">${s.id}</div></td>
+        <td><a href="set.html?id=${encodeURIComponent(s.id)}"><strong>${s.name}</strong></a><div class="tip">${s.id}</div></td>
         <td>${s.series||'—'}</td>
         <td>${s.releaseDate||'—'}</td>
         <td>${s.cardCount||'—'}</td>
