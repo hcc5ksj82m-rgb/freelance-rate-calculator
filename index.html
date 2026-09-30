@@ -22,8 +22,13 @@
       <p class="lead">Click a set to <strong>expand</strong> every card you can pull, with photos and live market prices. <span id="count">…</span> sets loaded.</p>
       <div class="warn">Pack links open live eBay Sold results (not release MSRP). Card prices load live from the Pokemon TCG API (TCGPlayer / Cardmarket).</div>
       <div class="grid two">
-        <div><label>Search sets</label><input id="q" type="search" placeholder="Base, Evolving Skies, Prismatic..." /></div>
+        <div><label>Search sets or cards</label><input id="q" type="search" placeholder="Set or card name — e.g. Evolving Skies, Charizard, Umbreon VMAX" /></div>
         <div><label>Series filter</label><select id="series"><option value="">All series</option></select></div>
+      </div>
+      <div id="card-matches" class="card-matches" hidden>
+        <h2>Matching cards</h2>
+        <div id="card-matches-status" class="expand-status"></div>
+        <div id="card-matches-grid" class="mini-grid card-search-grid"></div>
       </div>
       <table>
         <thead><tr><th>Set</th><th>Series</th><th>Released</th><th>Cards</th><th>eBay last sold</th></tr></thead>
@@ -40,6 +45,9 @@
     const cache = Object.create(null);
     const inflight = Object.create(null);
     const SELECT = 'id,name,number,rarity,images,tcgplayer,cardmarket';
+    const CARD_SELECT = 'id,name,number,rarity,images,tcgplayer,cardmarket,set';
+    let cardSearchTimer = null;
+    let cardSearchGen = 0;
 
     function money(n){ return '$' + Number(n).toFixed(2); }
     function priceOf(c){
@@ -213,7 +221,160 @@
       return null;
     }
 
-    function render(){
+
+    function escapeLucene(s){
+      return String(s).replace(/([+\-&|!(){}\[\]^"~*?:\\/])/g, '\\$1');
+    }
+
+    async function fetchJsonWithRetry(url){
+      let lastErr;
+      for (let attempt = 0; attempt < 5; attempt++){
+        try {
+          const res = await fetch(url, { headers: { Accept: 'application/json' } });
+          if (res.status === 429 || res.status >= 500) {
+            const err = new Error('API ' + res.status + (res.status === 429 ? ' (rate limited)' : ' (server error)'));
+            err.retryable = true;
+            throw err;
+          }
+          if (!res.ok) {
+            const err = new Error('API ' + res.status);
+            err.retryable = false;
+            throw err;
+          }
+          return await res.json();
+        } catch (e) {
+          lastErr = e;
+          if (!e.retryable && attempt === 0 && (!e.message || e.message.indexOf('API') !== 0)) {
+            // network error — retry
+          } else if (!e.retryable) {
+            throw e;
+          }
+          await sleep(500 * Math.pow(2, attempt) + Math.random() * 200);
+        }
+      }
+      throw lastErr;
+    }
+
+    async function searchCardsByName(query){
+      const q = escapeLucene(query.trim());
+      // Quoted prefix match; omit orderBy (API often 5xxs with it)
+      const url = 'https://api.pokemontcg.io/v2/cards'
+        + '?q=name:' + encodeURIComponent('"' + q + '*"')
+        + '&page=1'
+        + '&pageSize=24'
+        + '&select=' + CARD_SELECT;
+      return fetchJsonWithRetry(url);
+    }
+
+    function clearCardMatches(){
+      const wrap = document.getElementById('card-matches');
+      const status = document.getElementById('card-matches-status');
+      const grid = document.getElementById('card-matches-grid');
+      wrap.hidden = true;
+      status.classList.remove('expand-error');
+      status.textContent = '';
+      grid.innerHTML = '';
+    }
+
+    function expandSetById(setId){
+      const row = document.querySelector('tr.set-row[data-id="' + CSS.escape(setId) + '"]');
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (!row.classList.contains('open')) row.click();
+        return true;
+      }
+      return false;
+    }
+
+    function paintCardMatches(cards){
+      const wrap = document.getElementById('card-matches');
+      const status = document.getElementById('card-matches-status');
+      const grid = document.getElementById('card-matches-grid');
+      wrap.hidden = false;
+      status.classList.remove('expand-error');
+      if (!cards.length) {
+        status.textContent = 'No matching cards found.';
+        grid.innerHTML = '';
+        return;
+      }
+      const priced = cards.map(priceOf).filter(Boolean).length;
+      status.textContent = cards.length + ' card' + (cards.length === 1 ? '' : 's') + ' · ' + priced + ' with live prices';
+      grid.innerHTML = cards.map(c => {
+        const img = (c.images && (c.images.small || c.images.large)) || '';
+        const p = priceOf(c);
+        const name = String(c.name || '').replace(/</g, '&lt;');
+        const setName = (c.set && c.set.name) ? String(c.set.name).replace(/</g, '&lt;') : 'Unknown set';
+        const setId = (c.set && c.set.id) ? String(c.set.id) : '';
+        const setLink = setId
+          ? '<a class="card-set-link" href="set.html?id=' + encodeURIComponent(setId) + '" data-set-id="' + setId.replace(/"/g, '') + '">' + setName + '</a>'
+          : setName;
+        return '<article class="mini-card card-hit" data-set-id="' + setId.replace(/"/g, '') + '" role="button" tabindex="0">'
+          + (img ? '<img src="' + img + '" alt="' + name + '" loading="lazy" />' : '<div style="aspect-ratio:63/88;background:#f1f5f9"></div>')
+          + '<div class="m"><strong>' + name + '</strong>'
+          + '<div class="tip">#' + (c.number || '?') + ' · ' + (c.rarity || '—') + '</div>'
+          + '<div class="tip set-of">' + setLink + '</div>'
+          + '<div class="price">' + fmtPrice(p) + '</div></div></article>';
+      }).join('');
+
+      grid.querySelectorAll('.card-hit').forEach(el => {
+        const go = function (e) {
+          if (e.target.closest && e.target.closest('a')) return; // let set link work normally with modifier / default
+          const sid = el.dataset.setId;
+          if (!sid) return;
+          e.preventDefault();
+          if (!expandSetById(sid)) {
+            location.href = 'set.html?id=' + encodeURIComponent(sid);
+          }
+        };
+        el.addEventListener('click', go);
+        el.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(e); }
+        });
+      });
+      // Set links: prefer expand when possible (plain left-click only)
+      grid.querySelectorAll('a.card-set-link').forEach(a => {
+        a.addEventListener('click', function (e) {
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+          const sid = a.dataset.setId;
+          if (sid && expandSetById(sid)) e.preventDefault();
+        });
+      });
+    }
+
+    function scheduleCardSearch(){
+      const raw = document.getElementById('q').value.trim();
+      clearTimeout(cardSearchTimer);
+      if (raw.length < 2) {
+        cardSearchGen++;
+        clearCardMatches();
+        return;
+      }
+      const wrap = document.getElementById('card-matches');
+      const status = document.getElementById('card-matches-status');
+      wrap.hidden = false;
+      status.classList.remove('expand-error');
+      status.textContent = 'Searching cards…';
+      const gen = ++cardSearchGen;
+      cardSearchTimer = setTimeout(async function () {
+        try {
+          const json = await searchCardsByName(raw);
+          if (gen !== cardSearchGen) return;
+          paintCardMatches(json.data || []);
+        } catch (e) {
+          if (gen !== cardSearchGen) return;
+          wrap.hidden = false;
+          status.classList.add('expand-error');
+          status.innerHTML = 'Could not search cards: ' + e.message
+            + '. The Pokemon TCG API is often flaky — try again.'
+            + ' <button type="button" class="retry-btn">Retry</button>';
+          document.getElementById('card-matches-grid').innerHTML = '';
+          const btn = status.querySelector('.retry-btn');
+          if (btn) btn.onclick = function () { scheduleCardSearch(); };
+        }
+      }, 350);
+    }
+
+        function render(){
       const q = document.getElementById('q').value.toLowerCase();
       const ser = seriesSel.value;
       const list = sets.filter(s =>
@@ -280,7 +441,10 @@
       document.getElementById('count').textContent = '0';
       rows.innerHTML = '<tr><td colspan="5">Could not load set list: ' + e.message + '</td></tr>';
     });
-    document.getElementById('q').oninput = render;
+    document.getElementById('q').oninput = function () {
+      render();
+      scheduleCardSearch();
+    };
     seriesSel.onchange = render;
   </script>
 </body>

@@ -158,3 +158,14 @@ td .sub{color:var(--muted);font-size:.72rem;margin-top:.1rem}
   .thumb{width:28px;height:40px}
   .stats{grid-template-columns:1fr}
 }
+
+/* Card name search results (index) */
+.card-matches{margin:1rem 0 .35rem;padding:.85rem;background:#fffbeb;border:1px solid #fcd34d;border-radius:14px}
+.card-matches[hidden]{display:none!important}
+.card-matches h2{margin:.1rem 0 .35rem;font-size:1rem}
+.card-search-grid{max-height:380px}
+.card-hit{cursor:pointer;transition:box-shadow .15s,transform .15s}
+.card-hit:hover{box-shadow:0 6px 16px #0f172a14;transform:translateY(-1px)}
+.card-hit:focus{outline:2px solid #f59e0b;outline-offset:2px}
+.mini-card .set-of{margin-top:.2rem}
+.mini-card .set-of a{font-weight:650}
