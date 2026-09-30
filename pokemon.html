@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pokemon Card Market Values — RateLab</title>
+  <meta name="description" content="Demo Pokemon card price chart and market values. Sample data for learning — not live market prices." />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    table { width: 100%; border-collapse: collapse; font-size: .92rem; margin-top: 1rem; }
+    th, td { text-align: left; padding: .65rem .4rem; border-bottom: 1px solid var(--line); }
+    th { color: #93c5fd; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+    .up { color: #4ade80; } .down { color: #f87171; } .flat { color: #94a3b8; }
+    .chart {
+      margin-top: 1rem; height: 180px; display: flex; align-items: flex-end; gap: 8px;
+      padding: 12px; background: #0a1020; border-radius: 12px; border: 1px solid var(--line);
+    }
+    .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+    .bar { width: 100%; border-radius: 8px 8px 4px 4px; background: linear-gradient(180deg, #60a5fa, #2563eb); min-height: 8px; }
+    .bar-label { font-size: .65rem; color: var(--muted); text-align: center; }
+    .warn { background: #422006; border: 1px solid #a16207; color: #fde68a; padding: .75rem; border-radius: 12px; font-size: .85rem; margin-bottom: 1rem; }
+    input[type="search"] { margin-top: .5rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+        <nav class="nav">
+      <span class="brand">RateLab</span>
+      <a href="index.html">Calculator</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="pokemon.html">Pokemon</a>
+      <a href="hire.html">Hire</a>
+    </nav>
+    <div class="card">
+      <span class="pill">DEMO DATA</span>
+      <h1>Pokemon card market values</h1>
+      <p class="lead">Sample prices for popular cards — great niche for a money site. Replace with live API data later.</p>
+      <div class="warn">Not live market prices. Demo figures for learning. Always check TCGPlayer / PriceCharting before buying or selling.</div>
+
+      <h2>Price chart (demo USD)</h2>
+      <div class="chart" id="chart"></div>
+
+      <label for="q">Search cards</label>
+      <input id="q" type="search" placeholder="e.g. Charizard, Pikachu..." />
+
+      <table>
+        <thead>
+          <tr><th>Card</th><th>Set</th><th>NM price</th><th>7d</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p class="tip" style="margin-top:1rem">Money idea: free chart → ads / affiliate links to card shops → paid “collection tracker” later.</p>
+    </div>
+    <footer>RateLab · Demo Pokemon prices</footer>
+  </div>
+  <script>
+    const cards = [
+      { name: "Charizard ex", set: "Obsidian Flames", price: 48.50, change: 3.2 },
+      { name: "Pikachu VMAX", set: "Vivid Voltage", price: 62.00, change: -1.5 },
+      { name: "Umbreon VMAX", set: "Evolving Skies", price: 185.00, change: 5.1 },
+      { name: "Mewtwo VSTAR", set: "Pokemon GO", price: 22.40, change: 0.0 },
+      { name: "Giratina VSTAR", set: "Lost Origin", price: 41.20, change: -2.3 },
+      { name: "Base Set Charizard", set: "Base Set (shadowless NM-ish)", price: 4200.00, change: 1.1 },
+      { name: "Moonbreon", set: "Evolving Skies Alt Art", price: 310.00, change: 4.4 },
+      { name: "Iono", set: "Paldea Evolved", price: 28.75, change: -0.8 },
+    ];
+
+    function fmt(n) {
+      return n >= 1000 ? "$" + n.toLocaleString(undefined, { maximumFractionDigits: 0 }) : "$" + n.toFixed(2);
+    }
+    function changeHtml(c) {
+      if (c > 0) return `<span class="up">▲ ${c.toFixed(1)}%</span>`;
+      if (c < 0) return `<span class="down">▼ ${Math.abs(c).toFixed(1)}%</span>`;
+      return `<span class="flat">— 0%</span>`;
+    }
+    function render(list) {
+      const max = Math.max(...list.map(c => c.price));
+      document.getElementById("chart").innerHTML = list.slice(0, 6).map(c => {
+        const h = Math.max(8, Math.round((c.price / max) * 140));
+        return `<div class="bar-wrap"><div class="bar" style="height:${h}px" title="${c.name}"></div><div class="bar-label">${c.name.split(" ")[0]}</div></div>`;
+      }).join("");
+      document.getElementById("rows").innerHTML = list.map(c =>
+        `<tr><td><strong>${c.name}</strong></td><td>${c.set}</td><td>${fmt(c.price)}</td><td>${changeHtml(c.change)}</td></tr>`
+      ).join("");
+    }
+    render(cards);
+    document.getElementById("q").oninput = (e) => {
+      const q = e.target.value.toLowerCase();
+      render(cards.filter(c => (c.name + c.set).toLowerCase().includes(q)));
+    };
+  </script>
+</body>
+</html>
