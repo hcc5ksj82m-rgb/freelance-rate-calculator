@@ -18,13 +18,14 @@
     <div class="card">
       <span class="pill">EV TOOL</span>
       <h1>Cost of ripping packs</h1>
-      <p class="lead">Use <strong>eBay last-sold / current market pack cost</strong> — not the old release price.</p>
-      <div class="warn">Educational model. Official pull rates are unpublished. Check the eBay sold link before you enter pack cost.</div>
+      <p class="lead">Use <strong>eBay last-sold / current market pack cost</strong> — not the old release price. Dead-pack / chase defaults auto-fill by set era (you can override).</p>
+      <div class="warn">Educational model. Official pull rates are unpublished. Check the eBay sold link before you enter pack cost. EV defaults are era estimates, not guarantees.</div>
       <div class="grid two">
         <div>
           <label>Set</label>
           <select id="set"></select>
           <p class="tip"><a id="ebayLink" href="#" target="_blank" rel="noopener">eBay last sold for this pack →</a></p>
+          <p class="tip" id="profileTip"></p>
         </div>
         <div>
           <label>Market pack cost ($ from eBay sold)</label>
@@ -63,6 +64,15 @@
     const $ = id => document.getElementById(id);
     const params = new URLSearchParams(location.search);
     let setsById = {};
+    const PROFILE_LABELS = {
+      'chase-heavy': 'Chase-heavy set (tighter odds, higher chase $)',
+      'specialty': 'Specialty / promo-style product',
+      'modern-sv': 'Modern Scarlet & Violet era defaults',
+      'swsh': 'Sword & Shield era defaults',
+      'sm': 'Sun & Moon era defaults',
+      'bw-xy': 'BW / XY era defaults',
+      'vintage': 'Vintage era defaults'
+    };
     fetch('data/sets.json').then(r=>r.json()).then(sets => {
       setsById = Object.fromEntries(sets.map(s => [s.id, s]));
       const sel = $('set');
@@ -78,6 +88,11 @@
         if (!s) return;
         $('ebayLink').href = s.ebaySoldUrl || '#';
         if (s.ebayLastSoldUsd != null) $('cost').value = Number(s.ebayLastSoldUsd).toFixed(2);
+        if (s.evDeadUsd != null) $('dead').value = Number(s.evDeadUsd).toFixed(2);
+        if (s.evChaseOdds != null) $('odds').value = Number(s.evChaseOdds);
+        if (s.evChaseUsd != null) $('chase').value = Number(s.evChaseUsd).toFixed(2);
+        const label = PROFILE_LABELS[s.evProfile] || 'Custom / default EV profile';
+        $('profileTip').textContent = 'EV profile: ' + label + (s.packMsrpUsd != null ? ` · era MSRP hint $${Number(s.packMsrpUsd).toFixed(2)} (not market)` : '');
       }
       sync();
       sel.onchange = sync;

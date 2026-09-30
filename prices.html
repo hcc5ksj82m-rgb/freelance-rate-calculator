@@ -17,36 +17,93 @@
     </nav>
     <div class="card">
       <span class="pill">CHART</span>
-      <h1>Pokemon card market values</h1>
-      <p class="lead">Demo NM prices for popular chase cards. Daily updates will expand coverage set-by-set.</p>
-      <div class="warn">Not live market prices yet. Cross-check TCGPlayer / PriceCharting before buying or selling.</div>
+      <h1>Pokemon chase card values</h1>
+      <p class="lead">Popular chase cards with <strong>LIVE</strong> market prices from the Pokemon TCG API (TCGPlayer / Cardmarket). <span id="metaLine">Loading…</span></p>
+      <div class="warn" id="priceWarn">LIVE = API market/mid at fetch time. DEMO = educational placeholder only. Always cross-check TCGPlayer / PriceCharting before buying or selling.</div>
       <div class="chart" id="chart"></div>
-      <label>Search</label>
-      <input id="q" type="search" placeholder="Charizard, Umbreon..." />
+      <div class="toolbar">
+        <div><label>Search</label><input id="q" type="search" placeholder="Charizard, Umbreon, Iono..." /></div>
+        <div><label>Show</label>
+          <select id="statusFilter">
+            <option value="">All (live + demo)</option>
+            <option value="live" selected>LIVE only</option>
+            <option value="demo">DEMO only</option>
+          </select>
+        </div>
+      </div>
       <table>
-        <thead><tr><th>Card</th><th>Set</th><th>NM (demo)</th><th>Rarity</th></tr></thead>
+        <thead><tr><th></th><th>Card</th><th>Set</th><th>Price</th><th>Source</th><th>Status</th></tr></thead>
         <tbody id="rows"></tbody>
       </table>
-      <p class="tip"><a href="rip.html">Estimate pack rip EV →</a></p>
+      <p class="tip"><a href="rip.html">Estimate pack rip EV →</a> · Updated daily ~8:46am Sydney</p>
     </div>
     <footer>PackEV</footer>
   </div>
   <script>
-    let cards=[];
-    function fmt(n){return n>=1000?'$'+n.toLocaleString(undefined,{maximumFractionDigits:0}):'$'+n.toFixed(2)}
-    function render(list){
-      const max=Math.max(...list.map(c=>c.price),1);
-      document.getElementById('chart').innerHTML=list.slice(0,8).map(c=>{
-        const h=Math.max(8,Math.round((c.price/max)*140));
-        return `<div class="bar-wrap"><div class="bar" style="height:${h}px"></div><div class="bar-label">${c.name.split(' ')[0]}</div></div>`;
-      }).join('');
-      document.getElementById('rows').innerHTML=list.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.set}</td><td>${fmt(c.price)}</td><td>${c.rarity}</td></tr>`).join('');
+    let cards = [];
+    function usd(c){
+      return Number(c.priceUsdApprox != null ? c.priceUsdApprox : c.price) || 0;
     }
-    fetch('data/demo-cards.json').then(r=>r.json()).then(d=>{cards=d;render(cards)});
-    document.getElementById('q').oninput=e=>{
-      const q=e.target.value.toLowerCase();
-      render(cards.filter(c=>(c.name+c.set).toLowerCase().includes(q)));
-    };
+    function fmt(c){
+      const n = usd(c);
+      const cur = c.currency || 'USD';
+      if (cur === 'EUR') return '€' + n.toFixed(2) + ' (~$' + n.toFixed(2) + ')';
+      return n >= 1000 ? '$' + n.toLocaleString(undefined,{maximumFractionDigits:0}) : '$' + n.toFixed(2);
+    }
+    function badge(status){
+      const s = (status || 'demo').toLowerCase();
+      return s === 'live'
+        ? '<span class="badge live">LIVE</span>'
+        : '<span class="badge demo">DEMO</span>';
+    }
+    function filtered(){
+      const q = document.getElementById('q').value.toLowerCase();
+      const st = document.getElementById('statusFilter').value;
+      return cards.filter(c => {
+        const name = (c.displayName || c.name || '') + ' ' + (c.set || '');
+        if (q && !name.toLowerCase().includes(q)) return false;
+        if (st && (c.priceStatus || 'demo') !== st) return false;
+        return true;
+      });
+    }
+    function render(){
+      const list = filtered();
+      const max = Math.max(...list.map(usd), 1);
+      document.getElementById('chart').innerHTML = list.slice(0, 10).map(c => {
+        const h = Math.max(8, Math.round((usd(c) / max) * 140));
+        const label = (c.displayName || c.name || '').split(' ').slice(0, 2).join(' ');
+        return `<div class="bar-wrap"><div class="bar" style="height:${h}px"></div><div class="bar-label">${label}</div></div>`;
+      }).join('') || '<p class="tip">No cards match.</p>';
+      document.getElementById('rows').innerHTML = list.map(c => {
+        const img = c.image ? `<img class="thumb" src="${c.image}" alt="" loading="lazy" />` : '';
+        const src = c.source ? c.source : '—';
+        return `<tr>
+          <td>${img}</td>
+          <td><strong>${c.displayName || c.name}</strong><div class="sub">${c.rarity || ''}${c.number ? ' · #' + c.number : ''}</div></td>
+          <td>${c.set || ''}</td>
+          <td>${fmt(c)}</td>
+          <td class="tip">${src}</td>
+          <td>${badge(c.priceStatus)}</td>
+        </tr>`;
+      }).join('');
+    }
+    Promise.all([
+      fetch('data/demo-cards.json').then(r => r.json()),
+      fetch('data/chase-prices-meta.json').then(r => r.json()).catch(() => null)
+    ]).then(([d, meta]) => {
+      cards = d;
+      const live = cards.filter(c => c.priceStatus === 'live').length;
+      const demo = cards.length - live;
+      if (meta) {
+        document.getElementById('metaLine').textContent =
+          `${cards.length} cards · ${live} LIVE · ${demo} DEMO · updated ${meta.updated || '?'}`;
+      } else {
+        document.getElementById('metaLine').textContent = `${cards.length} cards · ${live} LIVE · ${demo} DEMO`;
+      }
+      render();
+    });
+    document.getElementById('q').oninput = render;
+    document.getElementById('statusFilter').onchange = render;
   </script>
   <script src="border.js"></script>
 </body>
