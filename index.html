@@ -46,6 +46,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/graded.js"></script>
 
   <script>
     let sets = [];
@@ -53,7 +54,7 @@
     const seriesSel = document.getElementById('series');
     const cache = Object.create(null);
     const inflight = Object.create(null);
-    const SELECT = 'id,name,number,rarity,images,tcgplayer,cardmarket';
+    const SELECT = 'id,name,number,rarity,images,tcgplayer,cardmarket,set';
     const CARD_SELECT = 'id,name,number,rarity,images,tcgplayer,cardmarket,set';
     let cardSearchTimer = null;
     let cardSearchGen = 0;
@@ -153,7 +154,8 @@
           + (img ? '<img src="' + img + '" alt="' + name + '" loading="lazy" />' : '<div style="aspect-ratio:63/88;background:#f1f5f9"></div>')
           + '<div class="m"><strong>' + name + '</strong>'
           + '<div class="tip">#' + (c.number || '?') + ' · ' + (c.rarity || '—') + '</div>'
-          + '<div class="price">' + fmtPrice(p) + '</div></div></article>';
+          + '<div class="price">' + fmtPrice(p) + '</div>'
+          + PackEVGraded.render(c, c.set && c.set.name || '') + '</div></article>';
       }).join('');
     }
 
@@ -322,7 +324,8 @@
           + '<div class="m"><strong>' + name + '</strong>'
           + '<div class="tip">#' + (c.number || '?') + ' · ' + (c.rarity || '—') + '</div>'
           + '<div class="tip set-of">' + setLink + '</div>'
-          + '<div class="price">' + fmtPrice(p) + '</div></div></article>';
+          + '<div class="price">' + fmtPrice(p) + '</div>'
+          + PackEVGraded.render(c, c.set && c.set.name || '') + '</div></article>';
       }).join('');
 
       grid.querySelectorAll('.card-hit').forEach(el => {

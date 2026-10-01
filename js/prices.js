@@ -98,7 +98,8 @@
       mid: p ? p.mid : null,
       high: p ? p.high : null,
       market: p ? p.market : null,
-      priceStatus: p && p.live ? 'live' : 'demo'
+      priceStatus: p && p.live ? 'live' : 'demo',
+      graded: window.PackEVGraded.find(raw)
     };
   }
 
@@ -201,6 +202,7 @@
         + '<div class="tip set-of">' + setLink + '</div>'
         + '<div class="price">' + (c.price != null ? fmtMoney(c.price, c.currency) : '—') + ' ' + badge + '</div>'
         + sparkBars(c)
+        + window.PackEVGraded.render(c)
         + '<div class="tip">' + esc(c.source || '') + (c.printType ? ' · ' + esc(c.printType) : '') + '</div>'
         + '</div></article>';
     }).join('');

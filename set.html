@@ -52,11 +52,13 @@
     </div>
     <footer>PackEV · Live Pokemon TCG data</footer>
   </div>
+  <script src="js/graded.js"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const setId = params.get('id');
     const $ = id => document.getElementById(id);
     let cards = [];
+    let setName = '';
     const SELECT = 'id,name,number,rarity,images,tcgplayer,cardmarket';
 
     const ODDS = {
@@ -155,6 +157,7 @@
             <strong>${name}</strong>
             <div class="sub">#${c.number||'?'} · ${c.rarity||'—'}</div>
             <div class="price">${money(p)}</div>
+            ${PackEVGraded.render(c, setName)}
             <div class="odds">${rarityOdds(c.rarity)}</div>
           </div>
         </article>`;
@@ -178,10 +181,12 @@
           const setJson = await fetchJsonWithRetry('https://api.pokemontcg.io/v2/sets/' + encodeURIComponent(setId));
           const s = setJson.data;
           $('title').textContent = s.name;
+          setName = s.name || setId;
           document.title = s.name + ' — PackEV';
           $('lead').textContent = (s.series||'') + ' · released ' + (s.releaseDate||'?') + ' · ' + (s.printedTotal||s.total||'?') + ' cards';
         } catch (_) {
           $('title').textContent = setId;
+          setName = setId;
         }
 
         let page = 1, total = Infinity;
