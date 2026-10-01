@@ -137,7 +137,7 @@
     headingEl.textContent = filterCat ? catTitle(cats, filterCat) : 'Forum';
     leadEl.innerHTML = filterCat
       ? 'Threads in this category. <a href="forum.html">← All categories</a> · <a href="index.html">Search cards</a>'
-      : 'Talk packs, sets, and fair prices. Guests can read; <a href="join.html">Join</a> or <a href="login.html">Log in</a> to post. Optional: <a href="index.html">search cards by name</a> on Sets.';
+      : 'Talk packs, sets, and fair prices. Guests can read; <a href="join.html">Join</a> or <a href="login.html">Log in</a> to post.';
 
     var html = '';
     html += '<div class="forum-cats">';
