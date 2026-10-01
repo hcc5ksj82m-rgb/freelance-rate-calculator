@@ -1,0 +1,4 @@
+scripts/.sync-cards-progress.json
+.env
+.env.*
+!.env.example

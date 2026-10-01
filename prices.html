@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pokemon card price chart — PackEV</title>
+  <meta name="description" content="Live Pokemon TCG chase prices and name search charts from TCGPlayer / Cardmarket via the Pokemon TCG API." />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -20,99 +21,50 @@
       </span>
     </nav>
     <div class="card">
-      <span class="pill">CHART</span>
-      <h1>Pokemon chase card values</h1>
-      <p class="lead">Popular chase cards with <strong>LIVE</strong> market prices from the Pokemon TCG API (TCGPlayer / Cardmarket). <span id="metaLine">Loading…</span></p>
-      <div class="warn" id="priceWarn">LIVE = API market/mid at fetch time. DEMO = educational placeholder only. Always cross-check TCGPlayer / PriceCharting before buying or selling.</div>
-      <div class="chart" id="chart"></div>
+      <span class="pill">LIVE CHART</span>
+      <h1>Pokemon card prices</h1>
+      <p class="lead">
+        Search any card by name for <strong>LIVE</strong> TCGPlayer / Cardmarket snapshots and a simple field chart (low / mid / market / high).
+        On this page we do <strong>not</strong> dump every card (too large for static hosting) —
+        instead we feature a rotating window of <strong>20</strong> from a pool of ~<strong>top 100</strong> chase cards by market price.
+        <span id="metaLine">Loading…</span>
+      </p>
+      <div class="warn" id="priceWarn">
+        LIVE = API market/mid at fetch time. Educational tool only — not investment advice. Always cross-check TCGPlayer / PriceCharting before buying or selling.
+        Full catalog sync (all sets/cards) lives in the backend database, not on this static page.
+      </div>
+
       <div class="toolbar">
-        <div><label>Search</label><input id="q" type="search" placeholder="Charizard, Umbreon, Iono..." /></div>
-        <div><label>Show</label>
-          <select id="statusFilter">
-            <option value="">All (live + demo)</option>
-            <option value="live" selected>LIVE only</option>
-            <option value="demo">DEMO only</option>
-          </select>
+        <div style="flex:2;min-width:200px">
+          <label for="q">Search card name</label>
+          <input id="q" type="search" placeholder="Charizard, Umbreon, Iono…" autocomplete="off" />
         </div>
       </div>
-      <table>
-        <thead><tr><th></th><th>Card</th><th>Set</th><th>Price</th><th>Source</th><th>Status</th></tr></thead>
-        <tbody id="rows"></tbody>
-      </table>
-      <p class="tip"><a href="rip.html">Estimate pack rip EV →</a> · Updated daily ~8:46am Sydney</p>
+      <p class="tip" id="rotateHint"></p>
+
+      <!-- Base load: rotating featured chase only (no full list) -->
+      <section id="featuredSection" class="featured-section">
+        <h2>Featured chase (rotating)</h2>
+        <div class="chart" id="chart"></div>
+        <div id="featuredGrid" class="price-grid"></div>
+      </section>
+
+      <!-- Search results only when user types a name -->
+      <section id="searchSection" class="search-section" hidden>
+        <h2>Search results</h2>
+        <div id="searchStatus" class="expand-status"></div>
+        <div class="chart" id="searchChart"></div>
+        <div id="searchGrid" class="price-grid"></div>
+      </section>
+
+      <p class="tip"><a href="rip.html">Estimate pack rip EV →</a> · <a href="index.html">Browse sets →</a></p>
     </div>
-    <footer>PackEV</footer>
+    <footer>PackEV · educational prices</footer>
   </div>
-  <script>
-    let cards = [];
-    function usd(c){
-      return Number(c.priceUsdApprox != null ? c.priceUsdApprox : c.price) || 0;
-    }
-    function fmt(c){
-      const n = usd(c);
-      const cur = c.currency || 'USD';
-      if (cur === 'EUR') return '€' + n.toFixed(2) + ' (~$' + n.toFixed(2) + ')';
-      return n >= 1000 ? '$' + n.toLocaleString(undefined,{maximumFractionDigits:0}) : '$' + n.toFixed(2);
-    }
-    function badge(status){
-      const s = (status || 'demo').toLowerCase();
-      return s === 'live'
-        ? '<span class="badge live">LIVE</span>'
-        : '<span class="badge demo">DEMO</span>';
-    }
-    function filtered(){
-      const q = document.getElementById('q').value.toLowerCase();
-      const st = document.getElementById('statusFilter').value;
-      return cards.filter(c => {
-        const name = (c.displayName || c.name || '') + ' ' + (c.set || '');
-        if (q && !name.toLowerCase().includes(q)) return false;
-        if (st && (c.priceStatus || 'demo') !== st) return false;
-        return true;
-      });
-    }
-    function render(){
-      const list = filtered();
-      const max = Math.max(...list.map(usd), 1);
-      document.getElementById('chart').innerHTML = list.slice(0, 10).map(c => {
-        const h = Math.max(8, Math.round((usd(c) / max) * 140));
-        const label = (c.displayName || c.name || '').split(' ').slice(0, 2).join(' ');
-        return `<div class="bar-wrap"><div class="bar" style="height:${h}px"></div><div class="bar-label">${label}</div></div>`;
-      }).join('') || '<p class="tip">No cards match.</p>';
-      document.getElementById('rows').innerHTML = list.map(c => {
-        const img = c.image ? `<img class="thumb" src="${c.image}" alt="" loading="lazy" />` : '';
-        const src = c.source ? c.source : '—';
-        return `<tr>
-          <td>${img}</td>
-          <td><strong>${c.displayName || c.name}</strong><div class="sub">${c.rarity || ''}${c.number ? ' · #' + c.number : ''}</div></td>
-          <td>${c.set || ''}</td>
-          <td>${fmt(c)}</td>
-          <td class="tip">${src}</td>
-          <td>${badge(c.priceStatus)}</td>
-        </tr>`;
-      }).join('');
-    }
-    Promise.all([
-      fetch('data/demo-cards.json').then(r => r.json()),
-      fetch('data/chase-prices-meta.json').then(r => r.json()).catch(() => null)
-    ]).then(([d, meta]) => {
-      cards = d;
-      const live = cards.filter(c => c.priceStatus === 'live').length;
-      const demo = cards.length - live;
-      if (meta) {
-        document.getElementById('metaLine').textContent =
-          `${cards.length} cards · ${live} LIVE · ${demo} DEMO · updated ${meta.updated || '?'}`;
-      } else {
-        document.getElementById('metaLine').textContent = `${cards.length} cards · ${live} LIVE · ${demo} DEMO`;
-      }
-      render();
-    });
-    document.getElementById('q').oninput = render;
-    document.getElementById('statusFilter').onchange = render;
-  </script>
   <script src="border.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/auth.js"></script>
-
+  <script src="js/prices.js"></script>
 </body>
 </html>

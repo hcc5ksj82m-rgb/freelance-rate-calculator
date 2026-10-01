@@ -1,7 +1,8 @@
 {
-  "status": "live",
+  "status": "live-rotating",
   "updated": "2026-10-01",
-  "liveCount": 13,
-  "demoCount": 0,
-  "note": "LIVE prices from Pokemon TCG API (TCGPlayer market/mid or Cardmarket). Not financial advice \u2014 cross-check before trading."
+  "featuredWindow": 20,
+  "poolTarget": 100,
+  "note": "Prices page shows a rotating 20 of ~top 100 chase cards (seeded by data/chase-pool.json, refreshed live from Pokemon TCG API). Full card dumps are not hosted on GH Pages — use search for any card, or the Supabase public.cards catalog for backend storage.",
+  "docs": "See supabase/cards_schema.sql and scripts/sync-pokemon-cards.py"
 }
