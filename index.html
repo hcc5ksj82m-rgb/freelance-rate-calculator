@@ -109,13 +109,26 @@
         const img = (c.images && (c.images.small || c.images.large)) || '';
         const p = priceOf(c);
         const name = String(c.name || '').replace(/</g, '&lt;');
-        return '<article class="mini-card">'
+        const cid = String(c.id || '').replace(/"/g, '&quot;');
+        return '<article class="mini-card card-hit" data-card-id="' + cid + '" role="link" tabindex="0">'
           + (img ? '<img src="' + img + '" alt="' + name + '" loading="lazy" />' : '<div style="aspect-ratio:63/88;background:#f1f5f9"></div>')
           + '<div class="m"><strong>' + name + '</strong>'
           + '<div class="tip">#' + (c.number || '?') + ' · ' + (c.rarity || '—') + '</div>'
           + '<div class="price">' + fmtPrice(p) + '</div>'
           + PackEVGraded.render(c, c.set && c.set.name || '') + '</div></article>';
       }).join('');
+      gridEl.querySelectorAll('.card-hit[data-card-id]').forEach(el => {
+        const go = function (e) {
+          if (e.target.closest && e.target.closest('a')) return;
+          const id = el.dataset.cardId;
+          if (!id) return;
+          location.href = 'card.html?id=' + encodeURIComponent(id);
+        };
+        el.addEventListener('click', go);
+        el.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(e); }
+        });
+      });
     }
 
     function showError(statusEl, gridEl, setId, message){
@@ -159,7 +172,7 @@
       const promise = fetchAllCards(setId, function (n, total, phase) {
         if (statusEl.dataset.setId !== setId) return;
         if (phase === 'db') {
-          statusEl.textContent = 'Loading from live API…';
+          statusEl.textContent = 'Loading catalog…';
           return;
         }
         statusEl.textContent = 'Loading… ' + n + (total < Infinity ? ' / ' + total : '');
@@ -233,7 +246,7 @@
         return;
       }
       const priced = cards.map(priceOf).filter(Boolean).length;
-      status.textContent = cards.length + ' card' + (cards.length === 1 ? '' : 's') + ' · ' + priced + ' with live prices';
+      status.textContent = cards.length + ' card' + (cards.length === 1 ? '' : 's') + ' · ' + priced + ' with prices · click a card for details';
       grid.innerHTML = cards.map(c => {
         const img = (c.images && (c.images.small || c.images.large)) || '';
         const p = priceOf(c);
@@ -243,7 +256,8 @@
         const setLink = setId
           ? '<a class="card-set-link" href="set.html?id=' + encodeURIComponent(setId) + '" data-set-id="' + setId.replace(/"/g, '') + '">' + setName + '</a>'
           : setName;
-        return '<article class="mini-card card-hit" data-set-id="' + setId.replace(/"/g, '') + '" role="button" tabindex="0">'
+        const cid = c.id || '';
+        return '<article class="mini-card card-hit" data-card-id="' + String(cid).replace(/"/g, '') + '" data-set-id="' + setId.replace(/"/g, '') + '" role="link" tabindex="0">'
           + (img ? '<img src="' + img + '" alt="' + name + '" loading="lazy" />' : '<div style="aspect-ratio:63/88;background:#f1f5f9"></div>')
           + '<div class="m"><strong>' + name + '</strong>'
           + '<div class="tip">#' + (c.number || '?') + ' · ' + (c.rarity || '—') + '</div>'
@@ -254,20 +268,18 @@
 
       grid.querySelectorAll('.card-hit').forEach(el => {
         const go = function (e) {
-          if (e.target.closest && e.target.closest('a')) return; // let set link work normally with modifier / default
-          const sid = el.dataset.setId;
-          if (!sid) return;
+          if (e.target.closest && e.target.closest('a')) return;
+          const cid = el.dataset.cardId;
+          if (!cid) return;
           e.preventDefault();
-          if (!expandSetById(sid)) {
-            location.href = 'set.html?id=' + encodeURIComponent(sid);
-          }
+          location.href = 'card.html?id=' + encodeURIComponent(cid);
         };
         el.addEventListener('click', go);
         el.addEventListener('keydown', function (e) {
           if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(e); }
         });
       });
-      // Set links: prefer expand when possible (plain left-click only)
+      // Set links navigate to set page (or expand when present)
       grid.querySelectorAll('a.card-set-link').forEach(a => {
         a.addEventListener('click', function (e) {
           if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;

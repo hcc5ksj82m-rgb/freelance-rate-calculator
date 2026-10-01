@@ -288,12 +288,52 @@
     throw finalErr;
   }
 
+
+  /**
+   * Fetch one card from public.cards by id. Returns null if missing.
+   * Throws on config/HTTP failure.
+   */
+  async function fetchById(cardId) {
+    var base = supabaseUrl();
+    var key = supabaseKey();
+    if (!cardId) return null;
+    if (!base || !key) {
+      var cfgErr = new Error('Catalog unavailable');
+      cfgErr.retryable = false;
+      throw cfgErr;
+    }
+    var select = [
+      'id', 'name', 'set_id', 'set_name', 'set_series', 'number', 'rarity',
+      'image_small', 'image_large', 'tcgplayer', 'cardmarket', 'market_price_usd'
+    ].join(',');
+    var endpoint = base + '/rest/v1/cards'
+      + '?id=eq.' + encodeURIComponent(cardId)
+      + '&select=' + select
+      + '&limit=1';
+    var res = await fetch(endpoint, {
+      headers: {
+        Accept: 'application/json',
+        apikey: key,
+        Authorization: 'Bearer ' + key
+      }
+    });
+    if (!res.ok) {
+      var err = new Error('Catalog ' + res.status);
+      err.retryable = res.status === 429 || res.status >= 500;
+      throw err;
+    }
+    var rows = await res.json();
+    if (!Array.isArray(rows) || !rows.length) return null;
+    return dbRowToCard(rows[0]);
+  }
+
   root.PackEVCards = {
     PAGE_SIZE: PAGE_SIZE,
     SEARCH_LIMIT: SEARCH_LIMIT,
     fetchAllForSet: fetchAllForSet,
     fetchCardsFromDb: fetchCardsFromDb,
     searchByName: searchByName,
+    fetchById: fetchById,
     fetchLiveCardById: fetchLiveCardById,
     dbRowToCard: dbRowToCard,
     sanitizeSearchTerm: sanitizeSearchTerm

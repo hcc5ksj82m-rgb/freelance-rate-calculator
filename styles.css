@@ -290,3 +290,33 @@ button:disabled{opacity:.55;cursor:not-allowed;filter:none}
 .phist-empty{display:flex;align-items:center;justify-content:center;height:100%;margin:0;padding:1rem;text-align:center}
 .poke-card{cursor:pointer}
 .poke-card.selected{outline:2px solid #f59e0b;outline-offset:2px}
+
+
+/* Dedicated card page */
+.card-detail-main{
+  display:grid;gap:1.1rem;align-items:start;
+  grid-template-columns:1fr;
+}
+@media(min-width:700px){
+  .card-detail-main{grid-template-columns:220px 1fr;gap:1.4rem}
+}
+.card-detail-art img,.card-detail-ph{
+  width:100%;max-width:280px;aspect-ratio:63/88;object-fit:cover;
+  border-radius:14px;border:1px solid var(--line);background:#f8fafc;
+  box-shadow:0 8px 24px #0f172a12;display:block;margin:0 auto;
+}
+.card-detail-info h1{margin:0 0 .25rem;font-size:1.45rem}
+.card-spot{font-size:1.75rem;font-weight:900;color:#0f172a;line-height:1.1}
+.card-detail-price{margin:.55rem 0 .75rem}
+.card-price-range{margin-top:.2rem}
+.sold-block{margin:1rem 0 .4rem;padding:.85rem;border-radius:14px;background:var(--soft);border:1px solid var(--line)}
+.sold-block h2{margin:.1rem 0 .35rem;font-size:1rem}
+.sold-btn{width:auto;display:inline-block;margin:.45rem 0 .2rem;padding:.65rem 1rem;text-decoration:none}
+.sold-btn:hover{text-decoration:none}
+.sold-hints{margin:.55rem 0 0;padding:0 0 0 1.1rem;font-size:.88rem}
+.sold-hints li{margin:.25rem 0}
+.card-detail-history{margin-top:1.15rem}
+.card-detail-history h2{margin:0 0 .55rem}
+.mini-card-link{display:flex;flex-direction:column;color:inherit;text-decoration:none;cursor:pointer;transition:box-shadow .15s,transform .15s}
+.mini-card-link:hover{text-decoration:none;box-shadow:0 6px 16px #0f172a14;transform:translateY(-1px)}
+.mini-card-link:focus{outline:2px solid #f59e0b;outline-offset:2px}
