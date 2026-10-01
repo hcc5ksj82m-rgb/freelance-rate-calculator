@@ -4,7 +4,8 @@
 
   var cfg = (window.PACK_EV_SUPABASE || {});
   var url = (cfg.SUPABASE_URL || '').trim();
-  var key = (cfg.SUPABASE_ANON_KEY || '').trim();
+  // Prefer the legacy JWT anon key, but accept Supabase's newer publishable key format.
+  var key = (cfg.SUPABASE_ANON_KEY || cfg.SUPABASE_PUBLISHABLE_KEY || '').trim();
   var configured = !!(url && key && url.indexOf('YOUR_') !== 0 && key.indexOf('YOUR_') !== 0);
 
   var client = null;
