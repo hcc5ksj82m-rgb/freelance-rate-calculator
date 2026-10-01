@@ -1,14 +1,13 @@
 # PackEV
 
-Pokemon-only: every TCG set, live chase price charts, pack rip EV calculator.
+Pokemon-only: every TCG set, live price charts, pack rip EV calculator.
 
 Live: https://hcc5ksj82m-rgb.github.io/freelance-rate-calculator/
 
 ## Prices page
 
-- **Base load:** rotating **20** of ~**top 100** chase cards (by market price), refreshed live from the Pokemon TCG API (TCGPlayer / Cardmarket). Not a full catalog dump (too large for GitHub Pages).
-- **Search:** type a card name to show matching cards with live prices + low/mid/market/high spark bars.
-- Seed IDs: `data/chase-pool.json`. Logic: `js/prices.js`.
+- **Search:** type any card name to show matching cards with live TCGPlayer / Cardmarket prices and low/mid/market/high spark bars.
+- The page makes no API requests until a card name is searched.
 
 ## Full catalog (Supabase)
 

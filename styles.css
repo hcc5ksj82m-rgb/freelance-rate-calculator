@@ -185,10 +185,8 @@ td .sub{color:var(--muted);font-size:.72rem;margin-top:.1rem}
 .auth-setup code{font-size:.78rem;background:#fff;padding:.1rem .35rem;border-radius:6px;border:1px solid var(--line)}
 button:disabled{opacity:.55;cursor:not-allowed;filter:none}
 
-/* Prices page — featured chase + search charts */
-.featured-section,.search-section{margin-top:.75rem}
-.featured-section.rotating{opacity:.72;transition:opacity .35s}
-.featured-section{transition:opacity .35s}
+/* Prices page — search results and charts */
+.search-section{margin-top:.75rem}
 .price-grid{
   display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
   gap:.65rem;margin-top:.75rem;
@@ -214,7 +212,7 @@ button:disabled{opacity:.55;cursor:not-allowed;filter:none}
   background:linear-gradient(180deg,#93c5fd,#3b82f6);min-height:4px;
 }
 .spark-col span{font-size:.55rem;color:var(--muted)}
-.search-section[hidden],.featured-section[hidden]{display:none!important}
+.search-section[hidden]{display:none!important}
 
 /* Forum */
 .forum-cats{

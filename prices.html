@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pokemon card price chart — PackEV</title>
-  <meta name="description" content="Live Pokemon TCG chase prices and name search charts from TCGPlayer / Cardmarket via the Pokemon TCG API." />
+  <title>Pokemon card prices — PackEV</title>
+  <meta name="description" content="Search Pokemon TCG cards by name for live TCGPlayer and Cardmarket prices." />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -22,16 +22,8 @@
       </span>
     </nav>
     <div class="card">
-      <span class="pill">LIVE CHART</span>
       <h1>Pokemon card prices</h1>
-      <p class="lead">
-        Search by name for <strong>LIVE</strong> TCGPlayer / Cardmarket snapshots and a simple field chart (low / mid / market / high).
-        A rotating selection of top chase cards is featured below.
-        <span id="metaLine">Loading…</span>
-      </p>
-      <div class="warn" id="priceWarn">
-        LIVE = API market/mid at fetch time. Educational tool only — not investment advice. Always cross-check TCGPlayer / PriceCharting before buying or selling.
-      </div>
+      <p class="lead">Search any card by name for live TCG prices.</p>
 
       <div class="toolbar">
         <div style="flex:2;min-width:200px">
@@ -39,24 +31,13 @@
           <input id="q" type="search" placeholder="Charizard, Umbreon, Iono…" autocomplete="off" />
         </div>
       </div>
-      <p class="tip" id="rotateHint"></p>
 
-      <!-- Base load: rotating featured chase only (no full list) -->
-      <section id="featuredSection" class="featured-section">
-        <h2>Featured chase (rotating)</h2>
-        <div class="chart" id="chart"></div>
-        <div id="featuredGrid" class="price-grid"></div>
-      </section>
-
-      <!-- Search results only when user types a name -->
       <section id="searchSection" class="search-section" hidden>
         <h2>Search results</h2>
         <div id="searchStatus" class="expand-status"></div>
         <div class="chart" id="searchChart"></div>
         <div id="searchGrid" class="price-grid"></div>
       </section>
-
-      <p class="tip"><a href="rip.html">Estimate pack rip EV →</a> · <a href="index.html">Browse sets →</a></p>
     </div>
     <footer>PackEV · educational prices</footer>
   </div>
