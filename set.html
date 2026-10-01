@@ -53,6 +53,10 @@
     <footer>PackEV · Live Pokemon TCG data</footer>
   </div>
   <script src="js/graded.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/cards-fetch.js"></script>
+  <script src="js/auth.js"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const setId = params.get('id');
@@ -189,34 +193,39 @@
           setName = setId;
         }
 
-        let page = 1, total = Infinity;
         cards = [];
-        while (cards.length < total) {
-          $('status').textContent = 'Loading cards… ' + cards.length + (total < Infinity ? ' / ' + total : '');
-          const url = 'https://api.pokemontcg.io/v2/cards?q=set.id:' + encodeURIComponent(setId)
-            + '&page=' + page + '&pageSize=100&orderBy=number&select=' + SELECT;
-          const json = await fetchJsonWithRetry(url);
-          const chunk = json.data || [];
-          total = json.totalCount != null ? json.totalCount : (cards.length + chunk.length);
-          cards = cards.concat(chunk);
-          if (!chunk.length) break;
-          page++;
-          if (cards.length < total) await sleep(250);
-        }
+        $('status').classList.remove('expand-error');
+        $('status').textContent = 'Loading cards…';
+        const result = await PackEVCards.fetchAllForSet(setId, function (n, total, phase) {
+          if (phase === 'db') {
+            $('status').textContent = 'Live API failed — loading from catalog…';
+            return;
+          }
+          $('status').textContent = 'Loading cards… ' + n + (total < Infinity ? ' / ' + total : '');
+        });
+        cards = result.cards;
         const rarities = [...new Set(cards.map(c => c.rarity).filter(Boolean))].sort();
         $('rarity').innerHTML = '<option value="">All rarities</option>';
         rarities.forEach(r => {
           const o = document.createElement('option'); o.value = r; o.textContent = r; $('rarity').appendChild(o);
         });
-        $('status').innerHTML = 'Loaded ' + cards.length + ' cards with live images/prices where available.'
+        const srcNote = result.source === 'db'
+          ? ' (catalog fallback)'
+          : (result.source === 'api-partial' ? ' (partial API load)' : '');
+        $('status').classList.remove('expand-error');
+        $('status').innerHTML = 'Loaded ' + cards.length + ' cards' + srcNote
+          + ' with images/prices where available.'
           + ' <button type="button" class="retry-btn" id="reloadBtn">Reload</button>';
-        $('reloadBtn').onclick = () => { cards = []; loadAll(); };
+        $('reloadBtn').onclick = () => { cards = []; $('grid').innerHTML = ''; loadAll(); };
         render();
       } catch (e) {
-        $('status').innerHTML = 'Live API error: ' + e.message
-          + '. The Pokemon TCG API can rate-limit or return 5xx. '
+        cards = [];
+        $('grid').innerHTML = '';
+        $('status').classList.add('expand-error');
+        $('status').innerHTML = 'Could not load cards: ' + e.message
+          + '. Tried the live API and catalog — tap Retry. '
           + '<button type="button" class="retry-btn" id="retryBtn">Retry</button>';
-        $('retryBtn').onclick = () => { cards = []; loadAll(); };
+        $('retryBtn').onclick = () => { cards = []; $('grid').innerHTML = ''; loadAll(); };
       }
     }
     $('q').oninput = render;
@@ -225,9 +234,6 @@
     loadAll();
   </script>
   <script src="border.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase-config.js"></script>
-  <script src="js/auth.js"></script>
 
 </body>
 </html>
