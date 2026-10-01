@@ -215,3 +215,45 @@ button:disabled{opacity:.55;cursor:not-allowed;filter:none}
 }
 .spark-col span{font-size:.55rem;color:var(--muted)}
 .search-section[hidden],.featured-section[hidden]{display:none!important}
+
+/* Forum */
+.forum-cats{
+  display:grid;gap:.55rem;margin:.75rem 0 1rem;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+}
+.forum-cat{
+  display:block;padding:.75rem .85rem;border-radius:12px;
+  background:var(--soft);border:1px solid var(--line);color:inherit;
+  text-decoration:none;transition:border-color .15s,box-shadow .15s;
+}
+.forum-cat:hover{border-color:#f59e0b;text-decoration:none;box-shadow:0 4px 12px #0f172a0a}
+.forum-cat.active{border-color:#f59e0b;background:#fffbeb}
+.forum-cat strong{display:block;color:#0f172a;font-size:.92rem}
+.forum-cat .sub{display:block;margin-top:.25rem;color:var(--muted);font-size:.78rem;line-height:1.35}
+.forum-thread-list{list-style:none;margin:.4rem 0 0;padding:0}
+.forum-thread-item{
+  padding:.85rem 0;border-bottom:1px solid var(--line);
+}
+.forum-thread-item:last-child{border-bottom:0}
+.forum-thread-item a strong{font-size:.98rem;color:#0f172a}
+.forum-snippet{margin:.35rem 0 0;color:#475569;font-size:.88rem;line-height:1.4}
+.forum-post{
+  padding:.9rem;margin:.55rem 0;border-radius:12px;
+  background:var(--soft);border:1px solid var(--line);
+}
+.forum-post.forum-op{background:#fffbeb;border-color:#fcd34d}
+.forum-meta{display:flex;flex-wrap:wrap;gap:.55rem;align-items:baseline;margin-bottom:.45rem}
+.forum-meta strong{color:#0f172a;font-size:.9rem}
+.forum-body{font-size:.95rem;line-height:1.5;color:#1e293b;word-break:break-word}
+.forum-compose{margin:1rem 0}
+.card-inset{
+  padding:1rem;border-radius:14px;border:1px solid var(--line);
+  background:#fff;margin:1rem 0;
+}
+.forum-compose textarea{
+  width:100%;padding:.65rem .75rem;border-radius:12px;
+  border:1px solid var(--line);background:var(--input-bg);color:var(--text);
+  font-size:1rem;font-family:inherit;resize:vertical;min-height:96px;
+}
+.forum-compose textarea:focus{outline:2px solid #fbbf24;outline-offset:1px;border-color:#f59e0b}
+.forum-compose button{width:auto;min-width:160px}

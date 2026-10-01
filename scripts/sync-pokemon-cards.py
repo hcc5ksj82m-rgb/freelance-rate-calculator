@@ -45,12 +45,16 @@ def env(name: str, default: str | None = None) -> str | None:
 def http_json(url: str, headers: dict[str, str] | None = None, method: str = "GET", body: bytes | None = None) -> Any:
     req = urllib.request.Request(url, data=body, method=method)
     req.add_header("Accept", "application/json")
+    req.add_header("User-Agent", "PackEV-card-sync/1.0")
     if body is not None:
         req.add_header("Content-Type", "application/json")
     for k, v in (headers or {}).items():
         req.add_header(k, v)
     with urllib.request.urlopen(req, timeout=90) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+        raw = resp.read().decode("utf-8").strip()
+        if not raw:
+            return None
+        return json.loads(raw)
 
 
 def fetch_with_backoff(url: str, api_key: str | None, max_attempts: int = 8) -> Any:
@@ -115,14 +119,18 @@ def market_usd(card: dict[str, Any]) -> float | None:
 
 def row_from_card(card: dict[str, Any]) -> dict[str, Any]:
     s = card.get("set") or {}
+    imgs = card.get("images") or {}
     return {
         "id": card["id"],
         "name": card.get("name") or "",
-        "set_id": s.get("id"),
+        "set_id": s.get("id") or "",
         "set_name": s.get("name"),
+        "set_series": s.get("series"),
         "number": card.get("number"),
         "rarity": card.get("rarity"),
-        "images": card.get("images"),
+        "artist": card.get("artist"),
+        "image_small": imgs.get("small"),
+        "image_large": imgs.get("large"),
         "tcgplayer": card.get("tcgplayer"),
         "cardmarket": card.get("cardmarket"),
         "market_price_usd": market_usd(card),
@@ -236,22 +244,21 @@ def main() -> int:
         )
         return 1
 
-    print("Fetching set list…", flush=True)
-    sets = list_sets(api_key)
-    print(f"{len(sets)} sets", flush=True)
-    if args.sets_only:
-        for s in sets[:5]:
-            print(f"  sample {s.get('id')} {s.get('name')}")
-        return 0
-
     progress = load_progress() if args.resume else {"completed_sets": [], "partial": {}}
     done = set(progress.get("completed_sets") or [])
 
-    targets = sets
-    if args.only_set:
-        targets = [s for s in sets if s.get("id") == args.only_set]
-        if not targets:
-            targets = [{"id": args.only_set, "name": args.only_set}]
+    if args.only_set and not args.sets_only:
+        print(f"Single-set mode: {args.only_set}", flush=True)
+        targets = [{"id": args.only_set, "name": args.only_set}]
+    else:
+        print("Fetching set list…", flush=True)
+        sets = list_sets(api_key)
+        print(f"{len(sets)} sets", flush=True)
+        if args.sets_only:
+            for s in sets[:5]:
+                print(f"  sample {s.get('id')} {s.get('name')}")
+            return 0
+        targets = sets
 
     total_upserted = 0
     for s in targets:

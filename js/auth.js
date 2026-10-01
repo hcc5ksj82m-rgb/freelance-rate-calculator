@@ -288,9 +288,11 @@
 
   window.PackEVAuth = {
     isConfigured: isConfigured,
+    getClient: getClient,
     getSession: function () { return session; },
     signOut: signOut,
-    refreshSession: refreshSession
+    refreshSession: refreshSession,
+    loadProfile: loadProfile
   };
 
   if (document.readyState === 'loading') {

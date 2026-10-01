@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forum — PackEV</title>
+  <meta name="description" content="PackEV community forum: buying &amp; selling, set completing, pulls, and tips." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <nav class="nav">
+      <span class="brand">PackEV</span>
+      <a href="index.html">Sets</a>
+      <a href="prices.html">Prices</a>
+      <a href="rip.html">Pack EV</a>
+      <a href="forum.html">Forum</a>
+      <a href="about.html">About</a>
+      <span id="auth-nav" class="auth-nav">
+        <a href="join.html">Join</a>
+        <a href="login.html">Log in</a>
+      </span>
+    </nav>
+
+    <div class="card" id="forum-root">
+      <span class="pill">COMMUNITY</span>
+      <h1 id="forum-heading">Forum</h1>
+      <p class="lead" id="forum-lead">
+        Talk packs, sets, and fair prices. Guests can read;
+        <a href="join.html">Join</a> or <a href="login.html">Log in</a> to post.
+        Optional: <a href="index.html">search cards by name</a> on Sets.
+      </p>
+      <div id="forum-status" class="expand-status" aria-live="polite"></div>
+      <div id="forum-guest-banner" class="warn" hidden>
+        You are browsing as a guest. <a href="join.html">Join</a> or <a href="login.html">Log in</a> to start a thread or reply.
+      </div>
+      <div id="forum-view"></div>
+    </div>
+    <footer>PackEV · Forum</footer>
+  </div>
+  <script src="border.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/forum.js"></script>
+</body>
+</html>

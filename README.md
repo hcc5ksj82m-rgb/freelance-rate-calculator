@@ -20,3 +20,9 @@ All cards across every set belong in Postgres, not static hosting:
 ## Members (Join / Log in)
 
 Foundation: `join.html`, `login.html`, `account.html`, `js/auth.js`. See **SETUP.md** / **AUTH.md**.
+
+## Forum
+
+Community board at `forum.html` (thread view: `?thread=<uuid>`, category filter: `?cat=<id>`).
+Uses Supabase tables `forum_categories` / `forum_threads` / `forum_replies` with RLS (anon read; authenticated insert/update own). Schema: `supabase/forum_schema.sql`.
+
