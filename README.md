@@ -8,6 +8,7 @@ Live: https://hcc5ksj82m-rgb.github.io/freelance-rate-calculator/
 
 - **Search:** type any card name to show matching cards with live TCGPlayer / Cardmarket prices and low/mid/market/high spark bars.
 - The page makes no API requests until a card name is searched.
+- **History chart:** click a search result (or a card on a set page) for a Google-style line chart with 1M / 6M / 1Y / 5Y / Max chips. 1M uses real Cardmarket avg1/avg7/avg30 when present; longer ranges are labeled DEMO (no free multi-year feed on api.pokemontcg.io).
 
 ## Full catalog (Supabase)
 

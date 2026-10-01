@@ -23,7 +23,7 @@
     </nav>
     <div class="card">
       <h1>Pokemon card prices</h1>
-      <p class="lead">Search any card by name for live TCG prices.</p>
+      <p class="lead">Search any card by name for live TCG prices. Click a result for a price-history chart (1M uses Cardmarket averages when present; longer ranges are labeled DEMO).</p>
 
       <div class="toolbar">
         <div style="flex:2;min-width:200px">
@@ -36,16 +36,21 @@
         <h2>Search results</h2>
         <div id="searchStatus" class="expand-status"></div>
         <div class="chart" id="searchChart"></div>
+        <div id="historyPanel" class="history-panel" hidden>
+          <div id="historyMount"></div>
+        </div>
         <div id="searchGrid" class="price-grid"></div>
       </section>
     </div>
     <footer>PackEV · educational prices</footer>
   </div>
   <script src="border.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/graded.js"></script>
+  <script src="js/price-history.js"></script>
   <script src="js/prices.js"></script>
 </body>
 </html>

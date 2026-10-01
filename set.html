@@ -47,12 +47,17 @@
         <div><label>Rarity</label><select id="rarity"><option value="">All rarities</option></select></div>
       </div>
       <p class="loading" id="status">Fetching cards from live API…</p>
+      <div id="historyPanel" class="history-panel" hidden>
+        <div id="historyMount"></div>
+      </div>
       <div class="card-grid" id="grid"></div>
       <p class="tip" style="margin-top:1rem"><a id="ripLink" href="rip.html">Open pack EV for this set →</a></p>
     </div>
     <footer>PackEV · Live Pokemon TCG data</footer>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="js/graded.js"></script>
+  <script src="js/price-history.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/cards-fetch.js"></script>
@@ -136,6 +141,43 @@
       throw lastErr;
     }
 
+    let selectedId = null;
+
+    function cardForHistory(c) {
+      const p = priceOf(c);
+      return {
+        id: c.id,
+        name: c.name,
+        number: c.number,
+        set: setName,
+        price: p ? p.value : null,
+        currency: p ? p.currency : 'USD',
+        source: p ? p.source : '',
+        printType: '',
+        cardmarket: c.cardmarket || null,
+        tcgplayer: c.tcgplayer || null
+      };
+    }
+
+    function showHistory(cardId) {
+      const c = cards.find(x => x.id === cardId);
+      const panel = $('historyPanel');
+      const mount = $('historyMount');
+      if (!c || !window.PackEVPriceHistory) return;
+      if (selectedId === cardId) {
+        selectedId = null;
+        panel.hidden = true;
+        PackEVPriceHistory.unmount(mount);
+        render();
+        return;
+      }
+      selectedId = cardId;
+      panel.hidden = false;
+      PackEVPriceHistory.mount(mount, cardForHistory(c), window.Chart);
+      render();
+      try { panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (_) {}
+    }
+
     function render() {
       const q = $('q').value.toLowerCase();
       const rar = $('rarity').value;
@@ -155,7 +197,8 @@
         const img = (c.images && (c.images.small || c.images.large)) || '';
         const p = priceOf(c);
         const name = String(c.name||'').replace(/</g,'&lt;');
-        return `<article class="poke-card">
+        const sel = (c.id === selectedId) ? ' selected' : '';
+        return `<article class="poke-card${sel}" tabindex="0" role="button" data-id="${String(c.id||'').replace(/"/g,'&quot;')}" aria-label="Show price history for ${name}">
           ${img ? `<img src="${img}" alt="${name}" loading="lazy" />` : '<div style="aspect-ratio:63/88;background:#f8fafc"></div>'}
           <div class="meta">
             <strong>${name}</strong>
@@ -214,7 +257,7 @@
           : (result.source === 'api-partial' ? ' (partial API load)' : '');
         $('status').classList.remove('expand-error');
         $('status').innerHTML = 'Loaded ' + cards.length + ' cards' + srcNote
-          + ' with images/prices where available.'
+          + ' with images/prices where available. Click a card for price history.'
           + ' <button type="button" class="retry-btn" id="reloadBtn">Reload</button>';
         $('reloadBtn').onclick = () => { cards = []; $('grid').innerHTML = ''; loadAll(); };
         render();
@@ -231,6 +274,20 @@
     $('q').oninput = render;
     $('sort').onchange = render;
     $('rarity').onchange = render;
+    $('grid').addEventListener('click', (e) => {
+      const el = e.target.closest('.poke-card');
+      if (!el) return;
+      const id = el.getAttribute('data-id');
+      if (id) showHistory(id);
+    });
+    $('grid').addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const el = e.target.closest('.poke-card');
+      if (!el) return;
+      e.preventDefault();
+      const id = el.getAttribute('data-id');
+      if (id) showHistory(id);
+    });
     loadAll();
   </script>
   <script src="border.js"></script>

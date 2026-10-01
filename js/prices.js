@@ -9,6 +9,8 @@
   var searchTimer = null;
   var searchGen = 0;
   var els = {};
+  var lastCards = [];
+  var selectedId = null;
 
   function $(id) { return document.getElementById(id); }
 
@@ -99,6 +101,8 @@
       high: p ? p.high : null,
       market: p ? p.market : null,
       priceStatus: p && p.live ? 'live' : 'demo',
+      tcgplayer: raw.tcgplayer || null,
+      cardmarket: raw.cardmarket || null,
       graded: window.PackEVGraded.find(raw)
     };
   }
@@ -159,11 +163,57 @@
       + '</div>';
   }
 
+  function findCard(id) {
+    for (var i = 0; i < lastCards.length; i++) {
+      if (lastCards[i].id === id) return lastCards[i];
+    }
+    return null;
+  }
+
+  function renderHistory(card) {
+    var panel = els.historyPanel;
+    if (!panel || !window.PackEVPriceHistory) return;
+    panel.hidden = false;
+    window.PackEVPriceHistory.mount(els.historyMount, card, window.Chart);
+    try {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (e) { /* ignore */ }
+  }
+
+  function clearHistory() {
+    selectedId = null;
+    if (els.historyPanel) els.historyPanel.hidden = true;
+    if (window.PackEVPriceHistory && els.historyMount) {
+      window.PackEVPriceHistory.unmount(els.historyMount);
+    }
+    if (els.searchGrid) {
+      Array.prototype.forEach.call(els.searchGrid.querySelectorAll('.price-card.selected'), function (el) {
+        el.classList.remove('selected');
+      });
+    }
+  }
+
+  function selectCard(id) {
+    var card = findCard(id);
+    if (!card) return;
+    if (selectedId === id) {
+      clearHistory();
+      return;
+    }
+    selectedId = id;
+    Array.prototype.forEach.call(els.searchGrid.querySelectorAll('.price-card'), function (el) {
+      el.classList.toggle('selected', el.getAttribute('data-id') === id);
+    });
+    renderHistory(card);
+  }
+
   function paintSearchResults(cards) {
     var status = els.searchStatus;
     var grid = els.searchGrid;
     var chart = els.searchChart;
     status.classList.remove('expand-error');
+    lastCards = cards;
+    clearHistory();
 
     if (!cards.length) {
       status.textContent = 'No matching cards found.';
@@ -174,7 +224,8 @@
 
     var liveN = cards.filter(function (c) { return c.priceStatus === 'live'; }).length;
     status.textContent = cards.length + ' match' + (cards.length === 1 ? '' : 'es')
-      + ' · ' + liveN + ' with LIVE prices (TCGPlayer / Cardmarket)';
+      + ' · ' + liveN + ' with LIVE prices (TCGPlayer / Cardmarket)'
+      + ' · click a card for price history';
 
     var max = Math.max.apply(null, cards.map(function (c) { return Number(c.price) || 0 }).concat([1]));
     chart.innerHTML = cards.slice(0, 12).map(function (c) {
@@ -194,7 +245,7 @@
       var setLink = c.setId
         ? '<a href="set.html?id=' + encodeURIComponent(c.setId) + '">' + esc(c.set || c.setId) + '</a>'
         : esc(c.set || '');
-      return '<article class="price-card">'
+      return '<article class="price-card" tabindex="0" role="button" data-id="' + esc(c.id) + '" aria-label="Show price history for ' + esc(c.name) + '">'
         + img
         + '<div class="m">'
         + '<strong>' + esc(c.name) + '</strong>'
@@ -208,6 +259,24 @@
     }).join('');
   }
 
+  function onGridActivate(e) {
+    var t = e.target;
+    if (t.closest && t.closest('a')) return;
+    var cardEl = t.closest ? t.closest('.price-card') : null;
+    if (!cardEl || !els.searchGrid.contains(cardEl)) return;
+    var id = cardEl.getAttribute('data-id');
+    if (id) selectCard(id);
+  }
+
+  function onGridKey(e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var cardEl = e.target.closest ? e.target.closest('.price-card') : null;
+    if (!cardEl || !els.searchGrid.contains(cardEl)) return;
+    e.preventDefault();
+    var id = cardEl.getAttribute('data-id');
+    if (id) selectCard(id);
+  }
+
   function scheduleSearch() {
     var raw = els.q.value.trim();
     clearTimeout(searchTimer);
@@ -217,6 +286,8 @@
       els.searchStatus.textContent = '';
       els.searchGrid.innerHTML = '';
       els.searchChart.innerHTML = '';
+      lastCards = [];
+      clearHistory();
       return;
     }
 
@@ -239,6 +310,8 @@
           + ' <button type="button" class="retry-btn">Retry</button>';
         els.searchGrid.innerHTML = '';
         els.searchChart.innerHTML = '';
+        lastCards = [];
+        clearHistory();
         var btn = els.searchStatus.querySelector('.retry-btn');
         if (btn) btn.onclick = function () { scheduleSearch(); };
       }
@@ -251,9 +324,13 @@
       searchSection: $('searchSection'),
       searchStatus: $('searchStatus'),
       searchGrid: $('searchGrid'),
-      searchChart: $('searchChart')
+      searchChart: $('searchChart'),
+      historyPanel: $('historyPanel'),
+      historyMount: $('historyMount')
     };
     els.q.addEventListener('input', scheduleSearch);
+    els.searchGrid.addEventListener('click', onGridActivate);
+    els.searchGrid.addEventListener('keydown', onGridKey);
   }
 
   if (document.readyState === 'loading') {
