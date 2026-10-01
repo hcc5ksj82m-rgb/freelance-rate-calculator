@@ -8,13 +8,14 @@ Live: https://hcc5ksj82m-rgb.github.io/freelance-rate-calculator/
 
 - **Search:** type any card name to show matching cards with live TCGPlayer / Cardmarket prices and low/mid/market/high spark bars.
 - The page makes no API requests until a card name is searched.
-- **History chart:** click a search result (or a card on a set page) for a Google-style line chart with 1M / 6M / 1Y / 5Y / Max chips. 1M uses real Cardmarket avg1/avg7/avg30 when present; longer ranges are labeled DEMO (no free multi-year feed on api.pokemontcg.io).
+- **History chart:** click a search result (or a card on a set page) for a clean line chart. Data comes from `public.card_price_history` (anon read). Range chips that lack enough points are hidden; tip: “More history builds daily.”
+- **$0 history:** daily snapshots of `cards.market_price_usd`. One-time Cardmarket avg1/avg7/avg30 backfill (~1/7/30 days ago) only for cards **without** TCGPlayer prices (avoids mixing USD/EUR on one chart). No paid APIs. Daily routine: after catalog sync run `scripts/snapshot-prices.py` or `sync-pokemon-cards.py --snapshot-history` / `--snapshot-only`.
 
 ## Full catalog (Supabase)
 
 All cards across every set belong in Postgres, not static hosting:
 
-1. Apply `supabase/cards_schema.sql` (RLS: anon/authenticated **SELECT only**; sync uses **service_role**).
+1. Apply `supabase/cards_schema.sql` and `supabase/card_price_history.sql` (RLS: anon/authenticated **SELECT only**; sync/snapshot uses **service_role**).
 2. Run `scripts/sync-pokemon-cards.py` with `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (see `.env.example`). Use `--resume` after rate limits; optional `POKEMONTCG_API_KEY`.
 
 ## Members (Join / Log in)

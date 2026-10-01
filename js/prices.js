@@ -100,7 +100,7 @@
       mid: p ? p.mid : null,
       high: p ? p.high : null,
       market: p ? p.market : null,
-      priceStatus: p && p.live ? 'live' : 'demo',
+      priceStatus: p && p.live ? 'live' : 'none',
       tcgplayer: raw.tcgplayer || null,
       cardmarket: raw.cardmarket || null,
       graded: window.PackEVGraded.find(raw)
@@ -238,7 +238,7 @@
     grid.innerHTML = cards.map(function (c) {
       var badge = c.priceStatus === 'live'
         ? '<span class="badge live">LIVE</span>'
-        : '<span class="badge demo">No live price</span>';
+        : '<span class="badge muted">No live price</span>';
       var img = c.image
         ? '<img src="' + esc(c.image) + '" alt="" loading="lazy" />'
         : '<div class="ph"></div>';

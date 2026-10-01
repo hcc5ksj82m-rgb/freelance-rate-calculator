@@ -33,3 +33,7 @@ Reload `join.html` / `login.html`. Submit buttons unlock when URL + anon key are
 - Members **never** get GitHub access.
 - Members can only read/update **their own** `profiles` row (RLS).
 - Static site files are not writable from the browser. See `AUTH.md`.
+
+## Price history
+
+Apply `supabase/card_price_history.sql` (already applied on Packev). Grow history with `python3 scripts/snapshot-prices.py` using the service role key (never commit secrets). Charts on Prices / Set pages read history with the anon key.

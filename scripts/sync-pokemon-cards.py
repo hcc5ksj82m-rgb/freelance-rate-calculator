@@ -11,6 +11,9 @@ Usage:
   python3 scripts/sync-pokemon-cards.py --resume   # continue from progress file
   python3 scripts/sync-pokemon-cards.py --sets-only
   python3 scripts/sync-pokemon-cards.py --max-pages 5   # smoke test
+  python3 scripts/sync-pokemon-cards.py --resume --snapshot-history
+  # After catalog upserts, --snapshot-history writes today's market_price_usd
+  # into public.card_price_history (same as scripts/snapshot-prices.py).
 
 Respects 429/5xx with exponential backoff. Progress saved to
   scripts/.sync-cards-progress.json
@@ -33,7 +36,7 @@ from typing import Any
 API = "https://api.pokemontcg.io/v2"
 SELECT = "id,name,number,rarity,images,tcgplayer,cardmarket,set"
 PROGRESS = Path(__file__).resolve().parent / ".sync-cards-progress.json"
-PAGE_SIZE = 250
+PAGE_SIZE = 50
 UPSERT_BATCH = 100
 
 
@@ -225,24 +228,108 @@ def sync_set_cards(
     return upserted
 
 
+
+def snapshot_today_history(supabase_url: str, service_key: str) -> int:
+    """Upsert today's cards.market_price_usd into card_price_history. Returns row count."""
+    # Lazy import / inline to keep single-file runnable without packaging
+    day = time.strftime("%Y-%m-%d", time.gmtime())
+    all_rows: list[dict[str, Any]] = []
+    page_size = 1000
+    start = 0
+    while True:
+        endpoint = (
+            supabase_url.rstrip("/")
+            + "/rest/v1/cards?select=id,market_price_usd"
+            + "&market_price_usd=not.is.null&market_price_usd=gt.0&order=id.asc"
+        )
+        req = urllib.request.Request(endpoint, method="GET")
+        req.add_header("Accept", "application/json")
+        req.add_header("User-Agent", "PackEV-card-sync/1.0")
+        req.add_header("apikey", service_key)
+        req.add_header("Authorization", "Bearer " + service_key)
+        req.add_header("Range", f"{start}-{start + page_size - 1}")
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            chunk = json.loads(resp.read().decode("utf-8") or "[]")
+        if not isinstance(chunk, list):
+            chunk = []
+        all_rows.extend(chunk)
+        if len(chunk) < page_size:
+            break
+        start += page_size
+
+    hist: list[dict[str, Any]] = []
+    for c in all_rows:
+        try:
+            price = float(c.get("market_price_usd"))
+        except (TypeError, ValueError):
+            continue
+        if not (price > 0):
+            continue
+        hist.append(
+            {
+                "card_id": c["id"],
+                "day": day,
+                "market_price_usd": price,
+                "source": "catalog",
+            }
+        )
+
+    endpoint = (
+        supabase_url.rstrip("/")
+        + "/rest/v1/card_price_history?on_conflict=card_id,day"
+    )
+    for i in range(0, len(hist), UPSERT_BATCH):
+        batch = hist[i : i + UPSERT_BATCH]
+        body = json.dumps(batch).encode("utf-8")
+        headers = {
+            "apikey": service_key,
+            "Authorization": "Bearer " + service_key,
+            "Prefer": "resolution=merge-duplicates,return=minimal",
+        }
+        for attempt in range(5):
+            try:
+                http_json(endpoint, headers=headers, method="POST", body=body)
+                break
+            except urllib.error.HTTPError as e:
+                if e.code in (429, 500, 502, 503, 504) and attempt < 4:
+                    time.sleep(2 ** attempt)
+                    continue
+                detail = e.read().decode("utf-8", errors="replace")[:400]
+                raise RuntimeError(f"History upsert HTTP {e.code}: {detail}") from e
+    return len(hist)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Sync Pokemon TCG cards → Supabase public.cards")
     parser.add_argument("--resume", action="store_true", help="Skip sets listed in progress file")
     parser.add_argument("--sets-only", action="store_true", help="List sets and exit (no card upserts)")
     parser.add_argument("--max-pages", type=int, default=None, help="Max pages per set (smoke test)")
     parser.add_argument("--set", dest="only_set", default=None, help="Sync a single set id")
+    parser.add_argument(
+        "--continue-on-error",
+        action="store_true",
+        help="On a set failure after retries, record it under skipped_sets and keep going",
+    )
     args = parser.parse_args()
 
     supabase_url = env("SUPABASE_URL")
     service_key = env("SUPABASE_SERVICE_ROLE_KEY")
     api_key = env("POKEMONTCG_API_KEY")
 
-    if not args.sets_only and (not supabase_url or not service_key):
+    if (not args.sets_only or args.snapshot_history or args.snapshot_only) and (
+        not supabase_url or not service_key
+    ):
         print(
             "Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (service role — never commit).",
             file=sys.stderr,
         )
         return 1
+
+    if args.snapshot_only:
+        print("Snapshot-only mode…", flush=True)
+        n = snapshot_today_history(supabase_url, service_key)  # type: ignore[arg-type]
+        print(f"Done. History rows upserted: {n}", flush=True)
+        return 0
 
     progress = load_progress() if args.resume else {"completed_sets": [], "partial": {}}
     done = set(progress.get("completed_sets") or [])
@@ -267,6 +354,9 @@ def main() -> int:
             print(f"skip {sid} (already completed)", flush=True)
             continue
         print(f"sync set {sid} — {s.get('name')}", flush=True)
+        if sid in set(progress.get("skipped_sets") or []):
+            print(f"skip {sid} (previously skipped)", flush=True)
+            continue
         try:
             n = sync_set_cards(sid, api_key, supabase_url, service_key, progress, args.max_pages)
             total_upserted += n
@@ -274,15 +364,30 @@ def main() -> int:
                 done.add(sid)
                 progress["completed_sets"] = sorted(done)
                 progress.get("partial", {}).pop(sid, None)
+                skipped = [x for x in (progress.get("skipped_sets") or []) if x != sid]
+                progress["skipped_sets"] = skipped
                 save_progress(progress)
         except Exception as e:
             print(f"ERROR on {sid}: {e}", file=sys.stderr)
+            if args.continue_on_error:
+                skipped = set(progress.get("skipped_sets") or [])
+                skipped.add(sid)
+                progress["skipped_sets"] = sorted(skipped)
+                progress.get("partial", {}).pop(sid, None)
+                save_progress(progress)
+                print(f"Skipped {sid} — continuing", flush=True)
+                time.sleep(1.0)
+                continue
             save_progress(progress)
             print("Progress saved — re-run with --resume", flush=True)
             return 2
         time.sleep(0.5)
 
     print(f"Done. Upserted ~{total_upserted} card rows this run.", flush=True)
+    if args.snapshot_history and supabase_url and service_key:
+        print("Writing today's price history snapshot…", flush=True)
+        n = snapshot_today_history(supabase_url, service_key)
+        print(f"History rows upserted: {n}", flush=True)
     return 0
 
 

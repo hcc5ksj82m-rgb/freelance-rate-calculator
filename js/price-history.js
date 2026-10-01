@@ -1,11 +1,5 @@
-/* PackEV — Google-style price history chart helpers.
- *
- * Free Pokemon TCG API (api.pokemontcg.io) only exposes spot prices plus
- * Cardmarket avg1 / avg7 / avg30. No free multi-year series exists without a
- * paid key (PokemonPriceTracker, PkmnPrices, RapidAPI, etc.).
- *
- * Real series: Cardmarket short window when present.
- * Longer ranges (6M / 1Y / 5Y / Max): labeled DEMO synthetic walk from spot.
+/* PackEV — Google-style price history charts from Supabase public.card_price_history.
+ * Only real points we store (catalog snapshots + Cardmarket avg anchors). No DEMO.
  */
 (function (root) {
   'use strict';
@@ -15,38 +9,34 @@
     { id: '6M', label: '6M', days: 182 },
     { id: '1Y', label: '1Y', days: 365 },
     { id: '5Y', label: '5Y', days: 365 * 5 },
-    { id: 'Max', label: 'Max', days: 365 * 5 }
+    { id: 'Max', label: 'Max', days: null }
   ];
 
-  function hashSeed(str) {
-    var h = 2166136261;
-    var s = String(str || 'packev');
-    for (var i = 0; i < s.length; i++) {
-      h ^= s.charCodeAt(i);
-      h = Math.imul(h, 16777619);
-    }
-    return h >>> 0;
+  var TIP_BUILD = 'More history builds daily';
+
+  function cfg() {
+    return root.PACK_EV_SUPABASE || {};
   }
 
-  function mulberry32(a) {
-    return function () {
-      a |= 0;
-      a = (a + 0x6d2b79f5) | 0;
-      var t = Math.imul(a ^ (a >>> 15), 1 | a);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
+  function supabaseUrl() {
+    return String(cfg().SUPABASE_URL || '').trim().replace(/\/$/, '');
   }
 
-  function daysAgo(n) {
-    var d = new Date();
-    d.setHours(12, 0, 0, 0);
-    d.setDate(d.getDate() - n);
-    return d;
+  function supabaseKey() {
+    var c = cfg();
+    return String(c.SUPABASE_ANON_KEY || c.SUPABASE_PUBLISHABLE_KEY || '').trim();
   }
 
   function fmtDay(d) {
+    if (typeof d === 'string') return d.slice(0, 10);
     return d.toISOString().slice(0, 10);
+  }
+
+  function daysAgoDate(n) {
+    var d = new Date();
+    d.setHours(12, 0, 0, 0);
+    d.setDate(d.getDate() - n);
+    return fmtDay(d);
   }
 
   function fmtMoney(n, currency) {
@@ -58,140 +48,74 @@
     return prefix + Number(n).toFixed(2);
   }
 
-  /** Extract best Cardmarket short-history anchors (real). */
-  function cardmarketAnchors(rawCm, spotFallback) {
-    var p = (rawCm && rawCm.prices) || rawCm || null;
-    if (!p) return null;
-    var cur = p.averageSellPrice != null ? Number(p.averageSellPrice)
-      : (p.trendPrice != null ? Number(p.trendPrice) : null);
-    if (cur == null || isNaN(cur)) cur = spotFallback != null ? Number(spotFallback) : null;
-    var a30 = p.avg30 != null ? Number(p.avg30) : null;
-    var a7 = p.avg7 != null ? Number(p.avg7) : null;
-    var a1 = p.avg1 != null ? Number(p.avg1) : null;
-    var points = [];
-    if (a30 != null && !isNaN(a30) && a30 > 0) points.push({ daysAgo: 30, value: a30, label: 'avg30' });
-    if (a7 != null && !isNaN(a7) && a7 > 0) points.push({ daysAgo: 7, value: a7, label: 'avg7' });
-    if (a1 != null && !isNaN(a1) && a1 > 0) points.push({ daysAgo: 1, value: a1, label: 'avg1' });
-    if (cur != null && !isNaN(cur) && cur > 0) points.push({ daysAgo: 0, value: cur, label: 'now' });
-    if (points.length < 2) return null;
-    return {
-      currency: 'EUR',
-      source: 'cardmarket',
-      points: points
-    };
-  }
-
-  function interpolateAnchors(anchors, days) {
-    var pts = anchors.points.slice().sort(function (a, b) { return b.daysAgo - a.daysAgo; });
-    var out = [];
-    var step = days <= 30 ? 1 : (days <= 182 ? 3 : (days <= 365 ? 7 : 14));
-    for (var d = days; d >= 0; d -= step) {
-      var val = null;
-      for (var i = 0; i < pts.length - 1; i++) {
-        var a = pts[i];
-        var b = pts[i + 1];
-        if (d <= a.daysAgo && d >= b.daysAgo) {
-          var t = (a.daysAgo - d) / Math.max(1, a.daysAgo - b.daysAgo);
-          val = a.value + (b.value - a.value) * t;
-          break;
-        }
-      }
-      if (val == null) {
-        if (d >= pts[0].daysAgo) val = pts[0].value;
-        else val = pts[pts.length - 1].value;
-      }
-      out.push({ date: fmtDay(daysAgo(d)), value: Math.round(val * 100) / 100 });
-    }
-    if (out.length && out[out.length - 1].date !== fmtDay(daysAgo(0))) {
-      out.push({
-        date: fmtDay(daysAgo(0)),
-        value: Math.round(pts[pts.length - 1].value * 100) / 100
-      });
-    }
-    return out;
-  }
-
-  function demoSeries(spot, currency, days, seedStr) {
-    var spotN = Number(spot);
-    if (!(spotN > 0)) spotN = 10;
-    var rand = mulberry32(hashSeed(seedStr + ':' + days));
-    var step = days <= 30 ? 1 : (days <= 182 ? 3 : (days <= 365 ? 7 : 14));
-    var n = Math.floor(days / step) + 1;
-    var values = new Array(n);
-    values[n - 1] = spotN;
-    var vol = Math.min(0.045, Math.max(0.012, 0.08 / Math.sqrt(Math.max(spotN, 1))));
-    for (var i = n - 2; i >= 0; i--) {
-      var shock = (rand() - 0.48) * vol;
-      var drift = (rand() - 0.5) * 0.004;
-      var prev = values[i + 1] * (1 + shock + drift);
-      values[i] = Math.max(spotN * 0.15, prev);
-    }
-    /* mild mean-reversion so the path lands on spot */
-    var scale = spotN / values[n - 1];
-    var out = [];
-    for (var j = 0; j < n; j++) {
-      var dAgo = (n - 1 - j) * step;
-      out.push({
-        date: fmtDay(daysAgo(dAgo)),
-        value: Math.round(values[j] * scale * 100) / 100
-      });
-    }
-    return {
-      currency: currency || 'USD',
-      source: 'demo',
-      demo: true,
-      points: out
-    };
-  }
-
-  /**
-   * Build series for a range chip.
-   * @returns {{currency, source, demo, points:[{date,value}], note}}
-   */
-  function seriesForRange(card, rangeId) {
-    var range = RANGES.find(function (r) { return r.id === rangeId; }) || RANGES[0];
-    var spot = card.price != null ? Number(card.price) : null;
-    var currency = card.currency || 'USD';
-    var cm = cardmarketAnchors(card.cardmarket, currency === 'EUR' ? spot : null);
-
-    if (range.days <= 30 && cm) {
-      return {
-        currency: 'EUR',
-        source: 'cardmarket',
-        demo: false,
-        points: interpolateAnchors(cm, range.days),
-        note: 'Real Cardmarket avg1 / avg7 / avg30 (+ current). Not daily ticks.'
-      };
-    }
-
-    if (range.days <= 30 && !cm && spot != null) {
-      /* Single real spot — still not a history; use DEMO for a readable 1M line */
-      var short = demoSeries(spot, currency, range.days, (card.id || card.name) + '-1m');
-      short.note = 'DEMO — Pokemon TCG API has no daily history; Cardmarket avgs missing for this print.';
-      return short;
-    }
-
-    var long = demoSeries(spot, currency, range.days, (card.id || card.name) + '-' + range.id);
-    long.note = 'DEMO — illustrative only. Free APIs do not provide multi-year Pokemon card price history.';
-    return long;
-  }
-
   function changeStats(points) {
     if (!points || points.length < 2) return null;
     var first = points[0].value;
     var last = points[points.length - 1].value;
     if (!(first > 0)) return null;
     var pct = ((last - first) / first) * 100;
-    return {
-      first: first,
-      last: last,
-      abs: last - first,
-      pct: pct
-    };
+    return { first: first, last: last, abs: last - first, pct: pct };
+  }
+
+  function filterByRange(points, rangeId) {
+    var range = RANGES.find(function (r) { return r.id === rangeId; }) || RANGES[0];
+    if (range.days == null) return points.slice();
+    var cut = daysAgoDate(range.days);
+    return points.filter(function (p) { return p.date >= cut; });
+  }
+
+  /** Ranges that have enough points to draw a line (≥2). */
+  function availableRanges(points) {
+    return RANGES.filter(function (r) {
+      return filterByRange(points, r.id).length >= 2;
+    });
   }
 
   /**
-   * Render chips + canvas into container; manages one Chart.js instance on el._packEvChart
+   * Fetch history rows for one card (anon PostgREST).
+   * @returns {Promise<{date:string,value:number,source:string}[]>}
+   */
+  async function fetchHistory(cardId) {
+    var base = supabaseUrl();
+    var key = supabaseKey();
+    if (!base || !key || !cardId) return [];
+
+    var endpoint = base + '/rest/v1/card_price_history'
+      + '?card_id=eq.' + encodeURIComponent(cardId)
+      + '&select=day,market_price_usd,source'
+      + '&order=day.asc'
+      + '&limit=2000';
+
+    var res = await fetch(endpoint, {
+      headers: {
+        Accept: 'application/json',
+        apikey: key,
+        Authorization: 'Bearer ' + key
+      }
+    });
+    if (!res.ok) {
+      var err = new Error('History ' + res.status);
+      err.status = res.status;
+      throw err;
+    }
+    var rows = await res.json();
+    if (!Array.isArray(rows)) return [];
+    var out = [];
+    for (var i = 0; i < rows.length; i++) {
+      var v = rows[i].market_price_usd != null ? Number(rows[i].market_price_usd) : NaN;
+      if (!(v > 0)) continue;
+      out.push({
+        date: fmtDay(rows[i].day),
+        value: Math.round(v * 100) / 100,
+        source: rows[i].source || ''
+      });
+    }
+    return out;
+  }
+
+  /**
+   * Render chips + canvas; loads real history from Supabase.
+   * Manages one Chart.js instance on el._packEvChart
    */
   function mount(container, card, ChartLib) {
     if (!container || !card) return;
@@ -201,7 +125,15 @@
       return;
     }
 
-    var state = { range: '1M' };
+    var state = {
+      range: '1M',
+      points: [],
+      loading: true,
+      error: null,
+      gen: (container._packEvHistGen || 0) + 1
+    };
+    container._packEvHistGen = state.gen;
+
     container.innerHTML = ''
       + '<div class="phist">'
       + '  <div class="phist-head">'
@@ -222,73 +154,132 @@
     var rangesEl = container.querySelector('.phist-ranges');
     var noteEl = container.querySelector('.phist-note');
     var canvas = container.querySelector('canvas');
+    var wrap = container.querySelector('.phist-chart-wrap');
 
     titleEl.textContent = (card.name || 'Card') + (card.number ? ' #' + card.number : '');
     metaEl.textContent = [card.set, card.printType, card.source].filter(Boolean).join(' · ');
+    priceEl.innerHTML = '<span class="tip">Loading history…</span>';
+    noteEl.textContent = '';
 
-    RANGES.forEach(function (r) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'phist-chip';
-      btn.setAttribute('role', 'tab');
-      btn.dataset.range = r.id;
-      btn.textContent = r.label;
-      btn.addEventListener('click', function () {
-        state.range = r.id;
-        paint();
+    function destroyChart() {
+      if (container._packEvChart) {
+        container._packEvChart.destroy();
+        container._packEvChart = null;
+      }
+    }
+
+    function paintEmpty(msg) {
+      destroyChart();
+      priceEl.innerHTML = card.price != null
+        ? '<span class="phist-spot">' + fmtMoney(card.price, card.currency || 'USD') + '</span>'
+        : '';
+      noteEl.textContent = msg || TIP_BUILD;
+      if (wrap) {
+        wrap.innerHTML = '<p class="phist-empty tip">' + (msg || TIP_BUILD) + '</p><canvas hidden></canvas>';
+        canvas = wrap.querySelector('canvas');
+      }
+    }
+
+    function rebuildChips(avail) {
+      rangesEl.innerHTML = '';
+      if (!avail.length) return;
+      if (!avail.some(function (r) { return r.id === state.range; })) {
+        state.range = avail[0].id;
+      }
+      avail.forEach(function (r) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'phist-chip';
+        btn.setAttribute('role', 'tab');
+        btn.dataset.range = r.id;
+        btn.textContent = r.label;
+        btn.addEventListener('click', function () {
+          state.range = r.id;
+          paint();
+        });
+        rangesEl.appendChild(btn);
       });
-      rangesEl.appendChild(btn);
-    });
+    }
 
     function paint() {
-      var series = seriesForRange(card, state.range);
-      var stats = changeStats(series.points);
+      if (state.loading) return;
+      if (state.error) {
+        paintEmpty('Could not load price history.');
+        return;
+      }
+
+      var avail = availableRanges(state.points);
+      rebuildChips(avail);
+
+      if (!avail.length) {
+        if (state.points.length === 1) {
+          paintEmpty('Only one price point so far. ' + TIP_BUILD + '.');
+        } else {
+          paintEmpty(TIP_BUILD + '.');
+        }
+        return;
+      }
+
+      var seriesPts = filterByRange(state.points, state.range);
+      if (seriesPts.length < 2) {
+        paintEmpty(TIP_BUILD + '.');
+        return;
+      }
+
+      /* restore canvas if we swapped in empty state */
+      if (!canvas || canvas.hidden || !wrap.contains(canvas)) {
+        wrap.innerHTML = '<canvas></canvas>';
+        canvas = wrap.querySelector('canvas');
+      }
+
+      var stats = changeStats(seriesPts);
       Array.prototype.forEach.call(rangesEl.querySelectorAll('.phist-chip'), function (btn) {
         var on = btn.dataset.range === state.range;
         btn.classList.toggle('active', on);
         btn.setAttribute('aria-selected', on ? 'true' : 'false');
       });
 
-      var badge = series.demo
-        ? '<span class="badge demo">DEMO</span>'
-        : '<span class="badge live">REAL (CM short)</span>';
+      var currency = 'USD';
       var changeHtml = '';
       if (stats) {
         var cls = stats.pct > 0.05 ? 'up' : (stats.pct < -0.05 ? 'down' : 'flat');
         var sign = stats.abs >= 0 ? '+' : '';
-        changeHtml = '<span class="' + cls + '">' + sign + fmtMoney(stats.abs, series.currency)
+        changeHtml = '<span class="' + cls + '">' + sign + fmtMoney(stats.abs, currency)
           + ' (' + sign + stats.pct.toFixed(1) + '%)</span>';
       }
       priceEl.innerHTML = '<span class="phist-spot">'
-        + fmtMoney(series.points.length ? series.points[series.points.length - 1].value : card.price, series.currency)
-        + '</span> ' + badge + ' ' + changeHtml;
+        + fmtMoney(seriesPts[seriesPts.length - 1].value, currency)
+        + '</span> ' + changeHtml;
 
-      noteEl.textContent = series.note || '';
+      var spanDays = (function () {
+        var a = new Date(seriesPts[0].date + 'T12:00:00');
+        var b = new Date(seriesPts[seriesPts.length - 1].date + 'T12:00:00');
+        return Math.max(0, Math.round((b - a) / 86400000));
+      })();
+      noteEl.textContent = seriesPts.length + ' points'
+        + (spanDays ? ' · ~' + spanDays + 'd span' : '')
+        + ' · ' + TIP_BUILD;
 
-      if (container._packEvChart) {
-        container._packEvChart.destroy();
-        container._packEvChart = null;
-      }
+      destroyChart();
 
-      var labels = series.points.map(function (p) { return p.date; });
-      var data = series.points.map(function (p) { return p.value; });
-      var lineColor = series.demo ? '#94a3b8' : '#2563eb';
-      var fillColor = series.demo ? 'rgba(148,163,184,.18)' : 'rgba(37,99,235,.12)';
+      var labels = seriesPts.map(function (p) { return p.date; });
+      var data = seriesPts.map(function (p) { return p.value; });
 
       container._packEvChart = new Chart(canvas.getContext('2d'), {
         type: 'line',
         data: {
           labels: labels,
           datasets: [{
-            label: series.demo ? 'DEMO price' : 'Cardmarket avg path',
+            label: 'Market price',
             data: data,
-            borderColor: lineColor,
-            backgroundColor: fillColor,
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37,99,235,.12)',
             borderWidth: 2,
-            pointRadius: labels.length <= 8 ? 3 : 0,
+            pointRadius: labels.length <= 12 ? 3 : 0,
             pointHoverRadius: 4,
-            tension: 0.25,
-            fill: true
+            tension: 0.2,
+            fill: true,
+            spanGaps: false
           }]
         },
         options: {
@@ -300,8 +291,7 @@
             tooltip: {
               callbacks: {
                 label: function (ctx) {
-                  return fmtMoney(ctx.parsed.y, series.currency)
-                    + (series.demo ? ' (DEMO)' : '');
+                  return fmtMoney(ctx.parsed.y, currency);
                 }
               }
             }
@@ -323,7 +313,7 @@
               ticks: {
                 color: '#64748b',
                 font: { size: 10 },
-                callback: function (v) { return fmtMoney(v, series.currency); }
+                callback: function (v) { return fmtMoney(v, currency); }
               },
               grid: { color: 'rgba(148,163,184,.25)' }
             }
@@ -332,11 +322,30 @@
       });
     }
 
-    paint();
+    fetchHistory(card.id).then(function (pts) {
+      if (container._packEvHistGen !== state.gen) return;
+      state.loading = false;
+      state.points = pts;
+      /* Prefer widest range that still has data when opening */
+      var avail = availableRanges(pts);
+      if (avail.length) {
+        var prefer = ['1M', '6M', '1Y', '5Y', 'Max'];
+        state.range = prefer.find(function (id) {
+          return avail.some(function (r) { return r.id === id; });
+        }) || avail[0].id;
+      }
+      paint();
+    }).catch(function () {
+      if (container._packEvHistGen !== state.gen) return;
+      state.loading = false;
+      state.error = true;
+      paint();
+    });
   }
 
   function unmount(container) {
     if (!container) return;
+    container._packEvHistGen = (container._packEvHistGen || 0) + 1;
     if (container._packEvChart) {
       container._packEvChart.destroy();
       container._packEvChart = null;
@@ -346,8 +355,9 @@
 
   root.PackEVPriceHistory = {
     RANGES: RANGES,
-    seriesForRange: seriesForRange,
-    cardmarketAnchors: cardmarketAnchors,
+    fetchHistory: fetchHistory,
+    availableRanges: availableRanges,
+    filterByRange: filterByRange,
     mount: mount,
     unmount: unmount,
     fmtMoney: fmtMoney
