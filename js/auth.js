@@ -7,6 +7,7 @@
   // Prefer the legacy JWT anon key, but accept Supabase's newer publishable key format.
   var key = (cfg.SUPABASE_ANON_KEY || cfg.SUPABASE_PUBLISHABLE_KEY || '').trim();
   var configured = !!(url && key && url.indexOf('YOUR_') !== 0 && key.indexOf('YOUR_') !== 0);
+  var emailRedirectTo = 'https://hcc5ksj82m-rgb.github.io/freelance-rate-calculator/login.html';
 
   var client = null;
   var session = null;
@@ -98,7 +99,10 @@
     var res = await c.auth.signUp({
       email: email,
       password: password,
-      options: { data: { display_name: displayName || '' } }
+      options: {
+        emailRedirectTo: emailRedirectTo,
+        data: { display_name: displayName || '' }
+      }
     });
     if (res.error) throw res.error;
     if (res.data && res.data.user) {
@@ -171,7 +175,7 @@
             setMsg(msg, 'Welcome! Redirecting…', 'ok');
             window.location.href = 'account.html';
           } else {
-            setMsg(msg, 'Check your email to confirm, then log in.', 'ok');
+            setMsg(msg, 'Check your email to confirm, then log in. If the link fails, ask the admin to disable email confirmation.', 'ok');
           }
         })
         .catch(function (err) {
