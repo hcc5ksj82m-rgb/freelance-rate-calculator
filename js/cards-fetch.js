@@ -1,4 +1,4 @@
-/* PackEV — load cards for a set: Pokemon TCG API first, Supabase catalog fallback. */
+/* PackEV — card catalog: Supabase public.cards primary; Pokemon TCG API optional. */
 (function (root) {
   'use strict';
 
@@ -6,7 +6,8 @@
   var SELECT = 'id,name,number,rarity,images,tcgplayer,cardmarket,set';
   /* Smaller than the old 100 — large pages often 5xx on pokemontcg.io */
   var PAGE_SIZE = 50;
-  var MAX_ATTEMPTS = 5;
+  var MAX_ATTEMPTS = 2;
+  var SEARCH_LIMIT = 24;
 
   function sleep(ms) {
     return new Promise(function (r) { setTimeout(r, ms); });
@@ -37,6 +38,9 @@
       },
       tcgplayer: row.tcgplayer || null,
       cardmarket: row.cardmarket || null,
+      market_price_usd: row.market_price_usd != null && row.market_price_usd !== ''
+        ? Number(row.market_price_usd)
+        : null,
       set: {
         id: row.set_id || '',
         name: row.set_name || '',
@@ -53,6 +57,16 @@
         sensitivity: 'base'
       });
     });
+  }
+
+  /** Sanitize user text for PostgREST ilike.*pattern* (strip LIKE / filter metachars). */
+  function sanitizeSearchTerm(query) {
+    return String(query || '')
+      .trim()
+      .replace(/[%_*\\]/g, ' ')
+      .replace(/[,.()]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   async function fetchCardsPage(setId, page, pageSize) {
@@ -91,7 +105,7 @@
         } else if (!e.retryable) {
           throw e;
         }
-        await sleep(500 * Math.pow(2, attempt) + Math.random() * 200);
+        await sleep(400 * Math.pow(2, attempt) + Math.random() * 150);
       }
     }
     throw lastErr;
@@ -143,15 +157,93 @@
   }
 
   /**
+   * Search public.cards by name (ilike). Limit defaults to 24.
+   * Does not dump the catalog — only runs when the caller passes a query.
+   * Returns { cards, source: 'db' }. Throws on config/HTTP failure.
+   */
+  async function searchByName(query, limit) {
+    var base = supabaseUrl();
+    var key = supabaseKey();
+    var lim = Math.min(Math.max(Number(limit) || SEARCH_LIMIT, 1), 48);
+    var term = sanitizeSearchTerm(query);
+    if (term.length < 2) {
+      return { cards: [], source: 'db' };
+    }
+    if (!base || !key) {
+      var cfgErr = new Error('Catalog unavailable');
+      cfgErr.retryable = false;
+      throw cfgErr;
+    }
+
+    var select = [
+      'id', 'name', 'set_id', 'set_name', 'set_series', 'number', 'rarity',
+      'image_small', 'image_large', 'tcgplayer', 'cardmarket', 'market_price_usd'
+    ].join(',');
+    var pattern = '*' + term + '*';
+    var endpoint = base + '/rest/v1/cards'
+      + '?name=ilike.' + encodeURIComponent(pattern)
+      + '&select=' + select
+      + '&order=market_price_usd.desc.nullslast'
+      + '&limit=' + lim;
+
+    var res = await fetch(endpoint, {
+      headers: {
+        Accept: 'application/json',
+        apikey: key,
+        Authorization: 'Bearer ' + key
+      }
+    });
+    if (!res.ok) {
+      var err = new Error('Catalog ' + res.status);
+      err.retryable = res.status === 429 || res.status >= 500;
+      throw err;
+    }
+    var rows = await res.json();
+    if (!Array.isArray(rows)) rows = [];
+    var cards = [];
+    for (var i = 0; i < rows.length; i++) cards.push(dbRowToCard(rows[i]));
+    return { cards: cards, source: 'db' };
+  }
+
+  /**
+   * Optional: fetch one card from the live Pokemon TCG API (for fresher prices after pick).
+   * Returns null on failure — never blocks search UX.
+   */
+  async function fetchLiveCardById(cardId) {
+    if (!cardId) return null;
+    try {
+      var url = API + '/' + encodeURIComponent(cardId) + '?select=' + SELECT;
+      var res = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!res.ok) return null;
+      var json = await res.json();
+      return json.data || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
    * Load every card for a set.
-   * 1) Pokemon TCG API with retries/backoff + pageSize 50
-   * 2) On persistent failure → Supabase public.cards for set_id
-   * 3) Mid-pagination API failure: prefer DB if it has rows; else keep partial API
+   * 1) Supabase public.cards for set_id (fast, reliable)
+   * 2) If catalog empty → Pokemon TCG API with short retries
    *
-   * Returns { cards, source: 'api'|'db'|'api-partial', warning? }
-   * Throws only when neither API nor DB can supply cards.
+   * Returns { cards, source: 'db'|'api'|'api-partial', warning? }
+   * Throws only when neither catalog nor API can supply cards.
    */
   async function fetchAllForSet(setId, onProgress) {
+    if (onProgress) onProgress(0, Infinity, 'db');
+
+    var dbCards = [];
+    var dbError = null;
+    try {
+      dbCards = await fetchCardsFromDb(setId);
+    } catch (dbErr) {
+      dbError = dbErr;
+    }
+    if (dbCards.length) {
+      return { cards: dbCards, source: 'db' };
+    }
+
     var page = 1;
     var total = Infinity;
     var cards = [];
@@ -169,31 +261,15 @@
         page++;
         if (cards.length < total) await sleep(250);
       }
-      return { cards: cards, source: 'api' };
+      return {
+        cards: cards,
+        source: 'api',
+        warning: dbError ? dbError.message : (dbCards.length === 0 ? 'Catalog empty for this set' : null)
+      };
     } catch (e) {
       apiError = e;
     }
 
-    if (onProgress) onProgress(cards.length, total, 'db');
-
-    var dbCards = [];
-    var dbError = null;
-    try {
-      dbCards = await fetchCardsFromDb(setId);
-    } catch (dbErr) {
-      dbError = dbErr;
-    }
-
-    /* Prefer DB whenever it has rows and the API failed (incl. mid-pagination) */
-    if (dbCards.length) {
-      return {
-        cards: dbCards,
-        source: 'db',
-        warning: apiError ? apiError.message : null
-      };
-    }
-
-    /* DB empty / unavailable — keep any partial API pages rather than stuck empty */
     if (cards.length) {
       return {
         cards: cards,
@@ -202,9 +278,10 @@
       };
     }
 
-    var msg = (apiError && apiError.message) || 'Unknown API error';
-    if (dbError) msg += '; catalog ' + dbError.message;
-    else msg += '; catalog empty for this set';
+    var msg = 'Could not load this set';
+    if (dbError) msg += ' (catalog ' + dbError.message + ')';
+    else msg += ' (catalog empty)';
+    if (apiError) msg += ' · live API unavailable';
     var finalErr = new Error(msg);
     finalErr.apiError = apiError;
     finalErr.dbError = dbError;
@@ -213,8 +290,12 @@
 
   root.PackEVCards = {
     PAGE_SIZE: PAGE_SIZE,
+    SEARCH_LIMIT: SEARCH_LIMIT,
     fetchAllForSet: fetchAllForSet,
     fetchCardsFromDb: fetchCardsFromDb,
-    dbRowToCard: dbRowToCard
+    searchByName: searchByName,
+    fetchLiveCardById: fetchLiveCardById,
+    dbRowToCard: dbRowToCard,
+    sanitizeSearchTerm: sanitizeSearchTerm
   };
 })(window);

@@ -1,10 +1,9 @@
-/* PackEV Prices — search the live TCG API by card name */
+/* PackEV Prices — search catalog (Supabase) by card name; live API optional after pick */
 (function () {
   'use strict';
 
-  var API = 'https://api.pokemontcg.io/v2/cards';
-  var SELECT = 'id,name,number,rarity,images,tcgplayer,cardmarket,set';
   var SEARCH_DEBOUNCE = 350;
+  var SEARCH_LIMIT = 24;
 
   var searchTimer = null;
   var searchGen = 0;
@@ -14,19 +13,13 @@
 
   function $(id) { return document.getElementById(id); }
 
-  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-
-  function escapeLucene(s) {
-    return String(s).replace(/([+\-&|!(){}\[\]^"~*?:\\/])/g, '\\$1');
-  }
-
   function esc(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
   }
 
-  /** Best TCGPlayer print block + market/mid value */
+  /** Best TCGPlayer print block + market/mid value; then Cardmarket; then catalog USD */
   function priceDetail(c) {
     var t = c.tcgplayer && c.tcgplayer.prices;
     if (t) {
@@ -68,6 +61,19 @@
         live: true
       };
     }
+    if (c.market_price_usd != null && !isNaN(Number(c.market_price_usd))) {
+      return {
+        value: Number(c.market_price_usd),
+        currency: 'USD',
+        source: 'catalog',
+        printType: '',
+        low: null,
+        mid: null,
+        high: null,
+        market: Number(c.market_price_usd),
+        live: true
+      };
+    }
     return null;
   }
 
@@ -103,44 +109,9 @@
       priceStatus: p && p.live ? 'live' : 'none',
       tcgplayer: raw.tcgplayer || null,
       cardmarket: raw.cardmarket || null,
+      market_price_usd: raw.market_price_usd != null ? Number(raw.market_price_usd) : null,
       graded: window.PackEVGraded.find(raw)
     };
-  }
-
-  async function fetchJsonWithRetry(url) {
-    var lastErr;
-    for (var attempt = 0; attempt < 5; attempt++) {
-      try {
-        var res = await fetch(url, { headers: { Accept: 'application/json' } });
-        if (res.status === 429 || res.status >= 500) {
-          var err = new Error('API ' + res.status + (res.status === 429 ? ' (rate limited)' : ' (server error)'));
-          err.retryable = true;
-          throw err;
-        }
-        if (!res.ok) {
-          var err2 = new Error('API ' + res.status);
-          err2.retryable = false;
-          throw err2;
-        }
-        return await res.json();
-      } catch (e) {
-        lastErr = e;
-        if (!e.retryable && attempt === 0 && (!e.message || e.message.indexOf('API') !== 0)) {
-          /* network — retry */
-        } else if (!e.retryable) {
-          throw e;
-        }
-        await sleep(500 * Math.pow(2, attempt) + Math.random() * 200);
-      }
-    }
-    throw lastErr;
-  }
-
-  async function searchCardsByName(query) {
-    var q = escapeLucene(query.trim());
-    var url = API + '?q=name:' + encodeURIComponent('"' + q + '*"')
-      + '&page=1&pageSize=24&select=' + SELECT;
-    return fetchJsonWithRetry(url);
   }
 
   function sparkBars(card) {
@@ -193,6 +164,32 @@
     }
   }
 
+  function patchCardInUi(card) {
+    var el = els.searchGrid && els.searchGrid.querySelector('.price-card[data-id="' + CSS.escape(card.id) + '"]');
+    if (!el) return;
+    var priceEl = el.querySelector('.price');
+    if (priceEl) {
+      var badge = card.priceStatus === 'live'
+        ? '<span class="badge live">LIVE</span>'
+        : '<span class="badge muted">No live price</span>';
+      priceEl.innerHTML = (card.price != null ? fmtMoney(card.price, card.currency) : '—') + ' ' + badge;
+    }
+  }
+
+  async function maybeRefreshLivePrice(card) {
+    if (!window.PackEVCards || !window.PackEVCards.fetchLiveCardById) return;
+    var live = await window.PackEVCards.fetchLiveCardById(card.id);
+    if (!live || selectedId !== card.id) return;
+    var refreshed = normalizeCard(live);
+    for (var i = 0; i < lastCards.length; i++) {
+      if (lastCards[i].id === card.id) {
+        lastCards[i] = refreshed;
+        break;
+      }
+    }
+    patchCardInUi(refreshed);
+  }
+
   function selectCard(id) {
     var card = findCard(id);
     if (!card) return;
@@ -205,6 +202,7 @@
       el.classList.toggle('selected', el.getAttribute('data-id') === id);
     });
     renderHistory(card);
+    maybeRefreshLivePrice(card);
   }
 
   function paintSearchResults(cards) {
@@ -216,15 +214,15 @@
     clearHistory();
 
     if (!cards.length) {
-      status.textContent = 'No matching cards found.';
+      status.textContent = 'No matching cards — try another name.';
       grid.innerHTML = '';
-      chart.innerHTML = '<p class="tip">Try another name.</p>';
+      chart.innerHTML = '<p class="tip">Tip: use 2+ letters (e.g. Charizard, Umbreon).</p>';
       return;
     }
 
     var liveN = cards.filter(function (c) { return c.priceStatus === 'live'; }).length;
     status.textContent = cards.length + ' match' + (cards.length === 1 ? '' : 'es')
-      + ' · ' + liveN + ' with LIVE prices (TCGPlayer / Cardmarket)'
+      + ' · ' + liveN + ' with prices'
       + ' · click a card for price history';
 
     var max = Math.max.apply(null, cards.map(function (c) { return Number(c.price) || 0 }).concat([1]));
@@ -259,6 +257,16 @@
     }).join('');
   }
 
+  function clearSearchUi() {
+    els.searchSection.hidden = true;
+    els.searchStatus.classList.remove('expand-error');
+    els.searchStatus.textContent = '';
+    els.searchGrid.innerHTML = '';
+    els.searchChart.innerHTML = '';
+    lastCards = [];
+    clearHistory();
+  }
+
   function onGridActivate(e) {
     var t = e.target;
     if (t.closest && t.closest('a')) return;
@@ -282,34 +290,31 @@
     clearTimeout(searchTimer);
     if (raw.length < 2) {
       searchGen++;
-      els.searchSection.hidden = true;
-      els.searchStatus.textContent = '';
-      els.searchGrid.innerHTML = '';
-      els.searchChart.innerHTML = '';
-      lastCards = [];
-      clearHistory();
+      clearSearchUi();
       return;
     }
 
     els.searchSection.hidden = false;
     els.searchStatus.classList.remove('expand-error');
-    els.searchStatus.textContent = 'Searching live API…';
+    els.searchStatus.textContent = 'Searching catalog…';
     var gen = ++searchGen;
     searchTimer = setTimeout(async function () {
       try {
-        var json = await searchCardsByName(raw);
+        if (!window.PackEVCards || !window.PackEVCards.searchByName) {
+          throw new Error('Catalog helper missing');
+        }
+        var result = await window.PackEVCards.searchByName(raw, SEARCH_LIMIT);
         if (gen !== searchGen) return;
-        var cards = (json.data || []).map(normalizeCard);
+        var cards = (result.cards || []).map(normalizeCard);
         cards.sort(function (a, b) { return (Number(b.price) || 0) - (Number(a.price) || 0); });
         paintSearchResults(cards);
       } catch (e) {
         if (gen !== searchGen) return;
         els.searchStatus.classList.add('expand-error');
-        els.searchStatus.innerHTML = 'Could not search cards: ' + esc(e.message)
-          + '. The Pokemon TCG API is often flaky — try again.'
+        els.searchStatus.innerHTML = 'Search failed — check your connection and try again.'
           + ' <button type="button" class="retry-btn">Retry</button>';
         els.searchGrid.innerHTML = '';
-        els.searchChart.innerHTML = '';
+        els.searchChart.innerHTML = '<p class="tip">Catalog search is temporarily unavailable.</p>';
         lastCards = [];
         clearHistory();
         var btn = els.searchStatus.querySelector('.retry-btn');
@@ -328,6 +333,7 @@
       historyPanel: $('historyPanel'),
       historyMount: $('historyMount')
     };
+    if (!els.q) return;
     els.q.addEventListener('input', scheduleSearch);
     els.searchGrid.addEventListener('click', onGridActivate);
     els.searchGrid.addEventListener('keydown', onGridKey);

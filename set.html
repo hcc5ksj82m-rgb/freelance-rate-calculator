@@ -26,7 +26,7 @@
       <h1 id="title">Loading set…</h1>
       <p class="lead" id="lead"></p>
       <div class="warn">
-        Card images + market prices load live from the Pokemon TCG API (TCGPlayer / Cardmarket when present).
+        Card images + market prices load from our catalog (TCGPlayer / Cardmarket snapshots when present).
         Pull odds are <strong>estimated by rarity</strong> (not official sealed odds — those are unpublished for most sets).
       </div>
       <div class="stats" id="stats" style="display:none">
@@ -46,7 +46,7 @@
         </div>
         <div><label>Rarity</label><select id="rarity"><option value="">All rarities</option></select></div>
       </div>
-      <p class="loading" id="status">Fetching cards from live API…</p>
+      <p class="loading" id="status">Loading cards…</p>
       <div id="historyPanel" class="history-panel" hidden>
         <div id="historyMount"></div>
       </div>
@@ -110,6 +110,8 @@
       const cm = c.cardmarket && c.cardmarket.prices;
       if (cm && (cm.averageSellPrice != null || cm.trendPrice != null))
         return { value: cm.averageSellPrice ?? cm.trendPrice, source: 'Cardmarket', currency: 'EUR' };
+      if (c.market_price_usd != null && !Number.isNaN(Number(c.market_price_usd)))
+        return { value: Number(c.market_price_usd), source: 'catalog', currency: 'USD' };
       return null;
     }
 
@@ -123,19 +125,19 @@
 
     async function fetchJsonWithRetry(url) {
       let lastErr;
-      for (let attempt = 0; attempt < 5; attempt++) {
+      for (let attempt = 0; attempt < 2; attempt++) {
         try {
           const res = await fetch(url, { headers: { Accept: 'application/json' } });
           if (res.status === 429 || res.status >= 500) {
             lastErr = new Error('API ' + res.status);
-            await sleep(500 * Math.pow(2, attempt) + Math.random() * 200);
+            await sleep(350 * Math.pow(2, attempt) + Math.random() * 100);
             continue;
           }
           if (!res.ok) throw new Error('API ' + res.status);
           return await res.json();
         } catch (e) {
           lastErr = e;
-          await sleep(500 * Math.pow(2, attempt) + Math.random() * 200);
+          if (attempt === 0) await sleep(350);
         }
       }
       throw lastErr;
@@ -241,20 +243,27 @@
         $('status').textContent = 'Loading cards…';
         const result = await PackEVCards.fetchAllForSet(setId, function (n, total, phase) {
           if (phase === 'db') {
-            $('status').textContent = 'Live API failed — loading from catalog…';
+            $('status').textContent = 'Loading catalog…';
             return;
           }
           $('status').textContent = 'Loading cards… ' + n + (total < Infinity ? ' / ' + total : '');
         });
         cards = result.cards;
+        if ((!setName || setName === setId) && cards[0] && cards[0].set && cards[0].set.name) {
+          setName = cards[0].set.name;
+          $('title').textContent = setName;
+          document.title = setName + ' — PackEV';
+          const series = cards[0].set.series || '';
+          $('lead').textContent = (series ? series + ' · ' : '') + cards.length + ' cards';
+        }
         const rarities = [...new Set(cards.map(c => c.rarity).filter(Boolean))].sort();
         $('rarity').innerHTML = '<option value="">All rarities</option>';
         rarities.forEach(r => {
           const o = document.createElement('option'); o.value = r; o.textContent = r; $('rarity').appendChild(o);
         });
         const srcNote = result.source === 'db'
-          ? ' (catalog fallback)'
-          : (result.source === 'api-partial' ? ' (partial API load)' : '');
+          ? ' (catalog)'
+          : (result.source === 'api-partial' ? ' (partial API load)' : (result.source === 'api' ? ' (live API)' : ''));
         $('status').classList.remove('expand-error');
         $('status').innerHTML = 'Loaded ' + cards.length + ' cards' + srcNote
           + ' with images/prices where available. Click a card for price history.'
@@ -265,8 +274,7 @@
         cards = [];
         $('grid').innerHTML = '';
         $('status').classList.add('expand-error');
-        $('status').innerHTML = 'Could not load cards: ' + e.message
-          + '. Tried the live API and catalog — tap Retry. '
+        $('status').innerHTML = 'Could not load cards for this set. Tap Retry. '
           + '<button type="button" class="retry-btn" id="retryBtn">Retry</button>';
         $('retryBtn').onclick = () => { cards = []; $('grid').innerHTML = ''; loadAll(); };
       }

@@ -25,7 +25,7 @@
       <span class="pill">POKEMON ONLY</span>
       <h1>Pokemon TCG sets</h1>
       <p class="lead">Explore sets and search for cards by name, with photos and live market prices when available. <span id="count">…</span> sets loaded.</p>
-      <div class="warn">Pack links open live eBay Sold results (not release MSRP). Card prices load live from the Pokemon TCG API (TCGPlayer / Cardmarket).</div>
+      <div class="warn">Pack links open live eBay Sold results (not release MSRP). Card prices come from our catalog (TCGPlayer / Cardmarket snapshots).</div>
       <div class="grid two">
         <div><label>Search sets or cards</label><input id="q" type="search" placeholder="Set or card name — e.g. Evolving Skies, Charizard, Umbreon VMAX" /></div>
         <div><label>Series filter</label><select id="series"><option value="">All series</option></select></div>
@@ -77,6 +77,8 @@
       const cm = c.cardmarket && c.cardmarket.prices;
       if (cm && (cm.averageSellPrice != null || cm.trendPrice != null))
         return { value: cm.averageSellPrice ?? cm.trendPrice, currency:'EUR' };
+      if (c.market_price_usd != null && !Number.isNaN(Number(c.market_price_usd)))
+        return { value: Number(c.market_price_usd), currency:'USD' };
       return null;
     }
     function fmtPrice(p){
@@ -99,8 +101,8 @@
       statusEl.classList.remove('expand-error');
       const source = cards._packevSource || 'api';
       const srcNote = source === 'db'
-        ? ' · catalog fallback'
-        : (source === 'api-partial' ? ' · partial API load' : '');
+        ? ' · catalog'
+        : (source === 'api-partial' ? ' · partial API load' : (source === 'api' ? ' · live API' : ''));
       statusEl.innerHTML = cards.length + ' cards · ' + priced + ' with live prices' + srcNote + ' · '
         + '<a href="set.html?id=' + encodeURIComponent(setId) + '">Open full page →</a>';
       gridEl.innerHTML = cards.map(c => {
@@ -119,8 +121,7 @@
     function showError(statusEl, gridEl, setId, message){
       statusEl.classList.add('expand-error');
       if (gridEl) gridEl.innerHTML = '';
-      statusEl.innerHTML = 'Could not load cards: ' + message
-        + '. Tried the live API and catalog — tap Retry.'
+      statusEl.innerHTML = 'Could not load cards for this set. Tap Retry.'
         + ' <button type="button" class="retry-btn">Retry</button>';
       const btn = statusEl.querySelector('.retry-btn');
       if (btn) {
@@ -141,7 +142,7 @@
       // Reuse in-flight request (avoids race / double fetch)
       if (inflight[setId]) {
         statusEl.classList.remove('expand-error');
-        statusEl.textContent = 'Loading cards from live API…';
+        statusEl.textContent = 'Loading cards…';
         try {
           const cards = await inflight[setId];
           if (statusEl.dataset.setId === setId) paint(cards, statusEl, gridEl);
@@ -152,13 +153,13 @@
       }
 
       statusEl.classList.remove('expand-error');
-      statusEl.textContent = 'Loading cards from live API…';
+      statusEl.textContent = 'Loading cards…';
       gridEl.innerHTML = '';
 
       const promise = fetchAllCards(setId, function (n, total, phase) {
         if (statusEl.dataset.setId !== setId) return;
         if (phase === 'db') {
-          statusEl.textContent = 'Live API failed — loading from catalog…';
+          statusEl.textContent = 'Loading from live API…';
           return;
         }
         statusEl.textContent = 'Loading… ' + n + (total < Infinity ? ' / ' + total : '');
@@ -195,48 +196,9 @@
     }
 
 
-    function escapeLucene(s){
-      return String(s).replace(/([+\-&|!(){}\[\]^"~*?:\\/])/g, '\\$1');
-    }
-
-    async function fetchJsonWithRetry(url){
-      let lastErr;
-      for (let attempt = 0; attempt < 5; attempt++){
-        try {
-          const res = await fetch(url, { headers: { Accept: 'application/json' } });
-          if (res.status === 429 || res.status >= 500) {
-            const err = new Error('API ' + res.status + (res.status === 429 ? ' (rate limited)' : ' (server error)'));
-            err.retryable = true;
-            throw err;
-          }
-          if (!res.ok) {
-            const err = new Error('API ' + res.status);
-            err.retryable = false;
-            throw err;
-          }
-          return await res.json();
-        } catch (e) {
-          lastErr = e;
-          if (!e.retryable && attempt === 0 && (!e.message || e.message.indexOf('API') !== 0)) {
-            // network error — retry
-          } else if (!e.retryable) {
-            throw e;
-          }
-          await sleep(500 * Math.pow(2, attempt) + Math.random() * 200);
-        }
-      }
-      throw lastErr;
-    }
-
     async function searchCardsByName(query){
-      const q = escapeLucene(query.trim());
-      // Quoted prefix match; omit orderBy (API often 5xxs with it)
-      const url = 'https://api.pokemontcg.io/v2/cards'
-        + '?q=name:' + encodeURIComponent('"' + q + '*"')
-        + '&page=1'
-        + '&pageSize=24'
-        + '&select=' + CARD_SELECT;
-      return fetchJsonWithRetry(url);
+      const result = await PackEVCards.searchByName(query, 24);
+      return result.cards || [];
     }
 
     function clearCardMatches(){
@@ -266,7 +228,7 @@
       wrap.hidden = false;
       status.classList.remove('expand-error');
       if (!cards.length) {
-        status.textContent = 'No matching cards found.';
+        status.textContent = 'No matching cards — try another name.';
         grid.innerHTML = '';
         return;
       }
@@ -325,23 +287,23 @@
       }
       const wrap = document.getElementById('card-matches');
       const status = document.getElementById('card-matches-status');
+      const grid = document.getElementById('card-matches-grid');
       wrap.hidden = false;
       status.classList.remove('expand-error');
-      status.textContent = 'Searching cards…';
+      status.textContent = 'Searching catalog…';
       const gen = ++cardSearchGen;
       cardSearchTimer = setTimeout(async function () {
         try {
-          const json = await searchCardsByName(raw);
+          const cards = await searchCardsByName(raw);
           if (gen !== cardSearchGen) return;
-          paintCardMatches(json.data || []);
+          paintCardMatches(cards);
         } catch (e) {
           if (gen !== cardSearchGen) return;
           wrap.hidden = false;
           status.classList.add('expand-error');
-          status.innerHTML = 'Could not search cards: ' + e.message
-            + '. The Pokemon TCG API is often flaky — try again.'
+          status.innerHTML = 'Search failed — try again.'
             + ' <button type="button" class="retry-btn">Retry</button>';
-          document.getElementById('card-matches-grid').innerHTML = '';
+          grid.innerHTML = '';
           const btn = status.querySelector('.retry-btn');
           if (btn) btn.onclick = function () { scheduleCardSearch(); };
         }
