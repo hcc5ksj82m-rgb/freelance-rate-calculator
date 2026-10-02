@@ -192,14 +192,33 @@
       }
       $('ripLink').href = 'rip.html?set=' + encodeURIComponent(setId);
       try {
+        // Prefer local sets.json (reliable on Pages); live API is optional and often 5xx.
+        let metaLoaded = false;
         try {
-          const setJson = await fetchJsonWithRetry('https://api.pokemontcg.io/v2/sets/' + encodeURIComponent(setId));
-          const s = setJson.data;
-          $('title').textContent = s.name;
-          setName = s.name || setId;
-          document.title = s.name + ' — PackEV';
-          $('lead').textContent = (s.series||'') + ' · released ' + (s.releaseDate||'?') + ' · ' + (s.printedTotal||s.total||'?') + ' cards';
-        } catch (_) {
+          const localSets = await fetch('data/sets.json').then(r => r.json());
+          const local = Array.isArray(localSets) ? localSets.find(x => x.id === setId) : null;
+          if (local && local.name) {
+            $('title').textContent = local.name;
+            setName = local.name;
+            document.title = local.name + ' — PackEV';
+            $('lead').textContent = (local.series || '')
+              + (local.releaseDate ? ' · released ' + local.releaseDate : '')
+              + (local.cardCount != null ? ' · ' + local.cardCount + ' cards' : '');
+            metaLoaded = true;
+          }
+        } catch (_) { /* ignore */ }
+        if (!metaLoaded) {
+          try {
+            const setJson = await fetchJsonWithRetry('https://api.pokemontcg.io/v2/sets/' + encodeURIComponent(setId));
+            const s = setJson.data;
+            $('title').textContent = s.name;
+            setName = s.name || setId;
+            document.title = s.name + ' — PackEV';
+            $('lead').textContent = (s.series||'') + ' · released ' + (s.releaseDate||'?') + ' · ' + (s.printedTotal||s.total||'?') + ' cards';
+            metaLoaded = true;
+          } catch (_) { /* ignore */ }
+        }
+        if (!metaLoaded) {
           $('title').textContent = setId;
           setName = setId;
         }
@@ -249,6 +268,7 @@
     $('sort').onchange = render;
     $('rarity').onchange = render;
     $('grid').addEventListener('click', (e) => {
+      if (e.target.closest && e.target.closest('a')) return;
       const el = e.target.closest('.poke-card');
       if (!el) return;
       const id = el.getAttribute('data-id');
@@ -256,6 +276,7 @@
     });
     $('grid').addEventListener('keydown', (e) => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
+      if (e.target.closest && e.target.closest('a')) return;
       const el = e.target.closest('.poke-card');
       if (!el) return;
       e.preventDefault();

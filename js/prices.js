@@ -265,6 +265,14 @@
     els.q.addEventListener('input', scheduleSearch);
     els.searchGrid.addEventListener('click', onGridActivate);
     els.searchGrid.addEventListener('keydown', onGridKey);
+    /* Deep-link from rip.html / shares: prices.html?q=Charizard */
+    try {
+      var q0 = new URLSearchParams(location.search).get('q');
+      if (q0 && String(q0).trim()) {
+        els.q.value = String(q0).trim();
+        scheduleSearch();
+      }
+    } catch (_) { /* ignore */ }
   }
 
   if (document.readyState === 'loading') {
