@@ -6,6 +6,19 @@
   var url = (cfg.SUPABASE_URL || '').trim();
   // Prefer the legacy JWT anon key, but accept Supabase's newer publishable key format.
   var key = (cfg.SUPABASE_ANON_KEY || cfg.SUPABASE_PUBLISHABLE_KEY || '').trim();
+  // Refuse anything that looks like a service_role JWT (must never ship to the browser).
+  try {
+    var parts = key.split('.');
+    if (parts.length >= 2) {
+      var b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (b64.length % 4) b64 += '=';
+      var payload = JSON.parse(atob(b64));
+      if (payload && String(payload.role || '').toLowerCase() === 'service_role') {
+        console.error('PackEVAuth: service_role key blocked — use anon/publishable only');
+        key = '';
+      }
+    }
+  } catch (_) { /* non-JWT publishable keys are fine */ }
   var configured = !!(url && key && url.indexOf('YOUR_') !== 0 && key.indexOf('YOUR_') !== 0);
   var emailRedirectTo = 'https://hcc5ksj82m-rgb.github.io/freelance-rate-calculator/login.html';
 

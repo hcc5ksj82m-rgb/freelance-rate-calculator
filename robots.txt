@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /scripts/
+Disallow: /supabase/
+Disallow: /.env
+Disallow: /.env.*
+
+Sitemap: https://hcc5ksj82m-rgb.github.io/freelance-rate-calculator/

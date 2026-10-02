@@ -1,0 +1,516 @@
+{
+  "lastUpdated": "2026-10-02",
+  "note": "Curated static listing of real Pokemon / TCG collector shows in English-speaking countries. Dates and venues change — always confirm on the organizer link. Not affiliated with The Pokemon Company. No fabricated DEMO events.",
+  "countries": [
+    {
+      "id": "usa",
+      "name": "United States",
+      "capital": "Washington, D.C.",
+      "hubNote": "Most large U.S. Pokemon/TCG cons are in major metro hubs (Chicago, Dallas, Las Vegas, Miami area, San Francisco, etc.), not primarily in D.C.",
+      "cities": [
+        {
+          "name": "Washington, D.C.",
+          "role": "capital",
+          "events": [
+            {
+              "name": "D.C. / Mid-Atlantic TCG & collector expos",
+              "dates": "TBD",
+              "venue": "Various Greater D.C. venues",
+              "url": "https://www.pokemon.com/us/play-pokemon/pokemon-events/",
+              "type": "hub",
+              "notes": "Official Play! Pokemon event finder for Regionals / League Cups near the capital; large multi-day dealer cons rotate nearby metros."
+            }
+          ]
+        },
+        {
+          "name": "San Francisco, CA",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "2026 Pokémon World Championships",
+              "dates": "2026-08-28 – 2026-08-30",
+              "venue": "Moscone Center, San Francisco, CA",
+              "url": "https://worlds.pokemon.com/en-us/",
+              "type": "official",
+              "notes": "Official Worlds (past for this season). Next Worlds location announced as Singapore for 2027."
+            }
+          ]
+        },
+        {
+          "name": "Chicago, IL",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Trading Card Con Chicago 2026",
+              "dates": "2026-05-01 – 2026-05-03",
+              "venue": "Hilton Chicago, Chicago, IL",
+              "url": "https://tradingcardcon.com/event/chicago-2026/",
+              "type": "convention",
+              "notes": "Large regional TCG/Pokemon-focused convention (May 2026 — past relative to Oct 2026)."
+            }
+          ]
+        },
+        {
+          "name": "San Diego, CA",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Card Party — San Diego",
+              "dates": "2026-05-22 – 2026-05-24",
+              "venue": "Gaylord Pacific Resort, San Diego, CA",
+              "url": "https://www.pokebeach.com/2026/05/card-party-pokemon-tcg-fan-conventions-announced-for-2026-emphasizing-community-over-commerce",
+              "type": "convention",
+              "notes": "Community-focused Pokemon TCG fan convention series."
+            }
+          ]
+        },
+        {
+          "name": "Fort Lauderdale, FL",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Card Party — Ft. Lauderdale",
+              "dates": "2026-07-24 – 2026-07-26",
+              "venue": "Broward County Convention Center, Fort Lauderdale, FL",
+              "url": "https://www.pokebeach.com/2026/05/card-party-pokemon-tcg-fan-conventions-announced-for-2026-emphasizing-community-over-commerce",
+              "type": "convention",
+              "notes": "Card Party 2026 Florida stop."
+            }
+          ]
+        },
+        {
+          "name": "Orlando, FL",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Miami TCG x The Nostalgia Con",
+              "dates": "2026-08-08 – 2026-08-09",
+              "venue": "Orange County Convention Center, Orlando, FL",
+              "url": "https://www.chrismaple.com/post/august-8-9-2026-miami-tcg-x-the-nostalgia-con",
+              "type": "convention",
+              "notes": "Large Florida trading-card / pop-culture weekend."
+            }
+          ]
+        },
+        {
+          "name": "Dallas, TX",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Card Party — Dallas",
+              "dates": "2026-09-04 – 2026-09-06",
+              "venue": "Gaylord Texan Resort & Convention Center, Dallas / Grapevine, TX",
+              "url": "https://www.pokebeach.com/2026/05/card-party-pokemon-tcg-fan-conventions-announced-for-2026-emphasizing-community-over-commerce",
+              "type": "convention",
+              "notes": "Card Party 2026 Texas stop."
+            }
+          ]
+        },
+        {
+          "name": "Las Vegas, NV",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "PokeKon Las Vegas — The Graveyard Shift",
+              "dates": "2026-11-06 – 2026-11-07",
+              "venue": "Tuscany Hotel & Casino, Las Vegas, NV",
+              "url": "https://pokekonlv.com/",
+              "type": "convention",
+              "notes": "Upcoming large Pokemon & TCG experience (vendor floor, guests, tournaments)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "uk",
+      "name": "United Kingdom",
+      "capital": "London",
+      "hubNote": "London hosts the biggest UK floors; strong recurring shows also in Birmingham, Edinburgh, Manchester, and regional towns.",
+      "cities": [
+        {
+          "name": "London",
+          "role": "capital",
+          "events": [
+            {
+              "name": "Card Market London",
+              "dates": "2026-10-18",
+              "venue": "Royal National Hotel, London",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "show",
+              "notes": "Recurring London trading-card market day."
+            },
+            {
+              "name": "London Card Show",
+              "dates": "2026-10-30 – 2026-11-01",
+              "venue": "Sandown Park Racecourse, Esher (Greater London)",
+              "url": "https://londoncardshow.co.uk/",
+              "type": "convention",
+              "notes": "Flagship London Card Show weekend near the capital."
+            },
+            {
+              "name": "Collectors Showcase — Olympia London",
+              "dates": "2026-11-21 – 2026-11-22",
+              "venue": "Olympia London (National Hall)",
+              "url": "https://www.ukcardshows.co.uk/",
+              "type": "convention",
+              "notes": "Two-day collectables show including trading cards / TCG."
+            },
+            {
+              "name": "The Card Show UK London",
+              "dates": "2026-12-05",
+              "venue": "Lee Valley VeloPark, London",
+              "url": "https://www.ukcardshows.co.uk/",
+              "type": "show",
+              "notes": "UK Card Shows London stop."
+            },
+            {
+              "name": "London Card Show XL",
+              "dates": "2027-04-16 – 2027-04-18",
+              "venue": "ExCeL London",
+              "url": "https://londoncardshow.co.uk/lcs-xl/",
+              "type": "convention",
+              "notes": "Large multi-day London Card Show at ExCeL (confirm dates on organizer site)."
+            }
+          ]
+        },
+        {
+          "name": "Birmingham",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Birmingham Card Show #7",
+              "dates": "2026-11-07",
+              "venue": "The New Bingley Hall, Birmingham",
+              "url": "https://www.ukcardshows.co.uk/event-details-registration/birmingham-card-show-7",
+              "type": "show",
+              "notes": "Large Midlands show with Pokemon / TCG vendor tables."
+            },
+            {
+              "name": "Collected Card Show: NEC Edition",
+              "dates": "2027-01-30 – 2027-01-31",
+              "venue": "National Exhibition Centre (NEC), Birmingham",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "convention",
+              "notes": "Upcoming NEC Birmingham card show weekend."
+            }
+          ]
+        },
+        {
+          "name": "Edinburgh",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Edinburgh Card Fest: Halloween Edition",
+              "dates": "2026-10-31 – 2026-11-01",
+              "venue": "Scottish Gas Murrayfield Stadium, Edinburgh",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "show",
+              "notes": "Halloween weekend card fest in Edinburgh."
+            },
+            {
+              "name": "Scotland Card Show — Edinburgh",
+              "dates": "2026-11-14",
+              "venue": "Royal Highland Centre, Edinburgh",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "show",
+              "notes": "Large Scotland card show with Pokemon / sports tables."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "canada",
+      "name": "Canada",
+      "capital": "Ottawa",
+      "hubNote": "Canada’s biggest dealer floors are usually Toronto (Mississauga), Vancouver, Calgary, and Montreal — not primarily Ottawa.",
+      "cities": [
+        {
+          "name": "Ottawa",
+          "role": "capital",
+          "events": [
+            {
+              "name": "Ottawa / Eastern Ontario Pokemon & TCG events",
+              "dates": "TBD",
+              "venue": "Various Ottawa venues",
+              "url": "https://www.pokemon.com/us/play-pokemon/pokemon-events/",
+              "type": "hub",
+              "notes": "Use Play! Pokemon for League Cups near the capital; large expos more often in Toronto / Montreal."
+            }
+          ]
+        },
+        {
+          "name": "Vancouver, BC",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Vancity Card Show — October 2026",
+              "dates": "2026-10-02 – 2026-10-04",
+              "venue": "Vancouver Convention Centre West, Vancouver, BC",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "convention",
+              "notes": "Large multi-day sports + Pokemon/TCG show (800+ tables)."
+            },
+            {
+              "name": "The Vault Card Show",
+              "dates": "2026-11-08",
+              "venue": "The Vancouver Flea Market, Vancouver, BC",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "show",
+              "notes": "Recurring Greater Vancouver collector show."
+            }
+          ]
+        },
+        {
+          "name": "Toronto / Mississauga, ON",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Sport Card Expo Toronto",
+              "dates": "2026-11-05 – 2026-11-08",
+              "venue": "The International Centre, Mississauga, ON",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "convention",
+              "notes": "Canada’s longest-running large card expo — sports + entertainment + Pokemon/TCG."
+            },
+            {
+              "name": "London Pokémon & TCG Show (Ontario)",
+              "dates": "2026-11-01",
+              "venue": "Centennial Hall, London, ON",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "show",
+              "notes": "One-day Pokemon / TCG show in southwestern Ontario."
+            }
+          ]
+        },
+        {
+          "name": "Calgary, AB",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "PokeKon-Fest — Calgary",
+              "dates": "2026-11-14",
+              "venue": "Radisson Hotel & Conference Centre Calgary Airport",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "show",
+              "notes": "All-Pokemon show day in Calgary."
+            }
+          ]
+        },
+        {
+          "name": "Montreal / Laval, QC",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Expo Collectiverse 3",
+              "dates": "2026-11-22",
+              "venue": "Sheraton Laval, Laval, QC",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "show",
+              "notes": "Sports cards + TCG tables in Greater Montreal."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "australia",
+      "name": "Australia",
+      "capital": "Canberra",
+      "hubNote": "Large AU shows cluster in Melbourne, Sydney, and Brisbane. Canberra has locals/League events more often than multi-day dealer expos.",
+      "cities": [
+        {
+          "name": "Canberra",
+          "role": "capital",
+          "events": [
+            {
+              "name": "Canberra Pokemon League / local TCG events",
+              "dates": "TBD",
+              "venue": "Various Canberra venues",
+              "url": "https://www.pokemon.com/us/play-pokemon/pokemon-events/",
+              "type": "hub",
+              "notes": "Check Play! Pokemon for League Cups near the capital; major expos are usually interstate."
+            }
+          ]
+        },
+        {
+          "name": "Melbourne, VIC",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "The TCG Expo — Malvern",
+              "dates": "2026-10-11",
+              "venue": "Malvern Town Hall, Malvern (Melbourne)",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "show",
+              "notes": "Melbourne-area TCG expo day."
+            },
+            {
+              "name": "Collectorama Melbourne",
+              "dates": "2026-11-01",
+              "venue": "Keilor Basketball Netball Stadium, Keilor Park",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "show",
+              "notes": "Collector show with TCG vendors."
+            },
+            {
+              "name": "Trading Card Summit Melbourne",
+              "dates": "2026-11-28 – 2026-11-29",
+              "venue": "Melbourne Showgrounds (Exhibition Pavilion), Flemington",
+              "url": "https://www.melbourneshowgrounds.com/whats-on/trading-card-summit-melbourne/",
+              "type": "convention",
+              "notes": "Australia’s biggest trading-card weekend — 700–800+ tables of sports + TCG."
+            }
+          ]
+        },
+        {
+          "name": "Sydney, NSW",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Hobby Hangout XL Sydney",
+              "dates": "2026-11-01",
+              "venue": "Carriageworks (Bays 22–24), Sydney",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "show",
+              "notes": "Large Sydney hobby / TCG hangout."
+            },
+            {
+              "name": "CollectFest Sydney",
+              "dates": "2027-04-10 – 2027-04-11",
+              "venue": "ICC Sydney Exhibition Centre",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "convention",
+              "notes": "Upcoming multi-day collectibles festival at ICC Sydney."
+            }
+          ]
+        },
+        {
+          "name": "Brisbane, QLD",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Brisbane Trading Card Show",
+              "dates": "2026-10-18",
+              "venue": "Royal ICC, Brisbane Showgrounds",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "show",
+              "notes": "One-day Brisbane trading-card show."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "new-zealand",
+      "name": "New Zealand",
+      "capital": "Wellington",
+      "hubNote": "Auckland hosts the largest NZ card show weekends; Wellington has strong store League Cups and locals.",
+      "cities": [
+        {
+          "name": "Wellington",
+          "role": "capital",
+          "events": [
+            {
+              "name": "Card Merchant Wellington — Pokemon TCG League Cup (Q3 2026)",
+              "dates": "2026-09-12",
+              "venue": "Card Merchant Wellington, 49 Manners Street",
+              "url": "https://cardmerchantwellington.co.nz/",
+              "type": "league",
+              "notes": "Quarterly League Cup in the capital (past relative to Oct 2026). Watch the store calendar for Q4/Q1."
+            },
+            {
+              "name": "Wellington Pokemon / TCG League events",
+              "dates": "TBD",
+              "venue": "Various Wellington venues",
+              "url": "https://www.pokemon.com/us/play-pokemon/pokemon-events/",
+              "type": "hub",
+              "notes": "Official Play! Pokemon finder for upcoming League Cups near Wellington."
+            }
+          ]
+        },
+        {
+          "name": "Auckland",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Auckland Card Show",
+              "dates": "2026-08-15 – 2026-08-16",
+              "venue": "Auckland Showgrounds, Auckland",
+              "url": "https://www.pokeprices.io/card-shows/nz/auckland-card-show-auckland-2026-08",
+              "type": "convention",
+              "notes": "Flagship NZ Pokemon/TCG weekend (past relative to Oct 2026). Watch for next edition dates."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ireland",
+      "name": "Ireland",
+      "capital": "Dublin",
+      "hubNote": "Dublin is the main hub for Ireland’s dedicated card shows; Cork and Galway also host markets.",
+      "cities": [
+        {
+          "name": "Dublin",
+          "role": "capital",
+          "events": [
+            {
+              "name": "The Emerald Card Show",
+              "dates": "2026-10-24",
+              "venue": "Dublin Royal Convention Centre, Dublin",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "show",
+              "notes": "Dublin trading-card show."
+            },
+            {
+              "name": "Ireland Card Show — Winter Edition",
+              "dates": "2026-11-08",
+              "venue": "InterContinental Dublin, Ballsbridge",
+              "url": "https://irelandcardshow.com/",
+              "type": "show",
+              "notes": "Recurring Ireland Card Show winter edition in the capital."
+            },
+            {
+              "name": "Dublin Card Expo",
+              "dates": "2027-01-23",
+              "venue": "Crowne Plaza Dublin Airport",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "show",
+              "notes": "Upcoming Dublin card expo."
+            }
+          ]
+        },
+        {
+          "name": "Cork",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Cork Card Show",
+              "dates": "2026-10-10",
+              "venue": "The Marina Market, Cork",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "show",
+              "notes": "Cork trading-card market day."
+            }
+          ]
+        },
+        {
+          "name": "Galway",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Irish Card Market Winter",
+              "dates": "2026-11-28",
+              "venue": "Dexcom Stadium, Galway",
+              "url": "https://cardatlas.app/blog/shows/international/",
+              "type": "show",
+              "notes": "Winter Irish Card Market in Galway."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

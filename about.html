@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>About PackEV</title>
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; form-action 'self'; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.pokemontcg.io https://cdn.jsdelivr.net;" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+<title>About PackEV</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -13,6 +16,7 @@
       <a href="index.html">Sets</a>
       <a href="prices.html">Prices</a>
       <a href="rip.html">Pack EV</a>
+      <a href="shows.html">Shows</a>
       <a href="forum.html">Forum</a>
       <a href="about.html">About</a>
       <span id="auth-nav" class="auth-nav">
@@ -26,6 +30,7 @@
       <p>Set list is refreshed from the public Pokemon TCG API. Card prices come from TCGPlayer / Cardmarket when available; history grows from free daily catalog snapshots.</p>
       <p>Set pages include card images, rarity-based pull estimates, and TCGPlayer/Cardmarket prices when available.</p>
       <p>Data and estimates are updated as sources change.</p>
+      <p>Looking for conventions? See the curated <a href="shows.html">Shows</a> directory (English-speaking capitals + major hub cities — real organizer links, last-updated labeled).</p>
       <h2>Members &amp; security</h2>
       <p>Optional Join / Log in uses Supabase Email auth. <strong>Members never get GitHub access</strong> and cannot write site files. Each member can only read/update their own profile row via database Row Level Security.</p>
       <p class="tip"><a href="AUTH.md">Security model (AUTH.md)</a> · <a href="SETUP.md">Operator setup (SETUP.md)</a> · <a href="join.html">Join</a></p>

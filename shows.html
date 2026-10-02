@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; form-action 'self'; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.pokemontcg.io https://cdn.jsdelivr.net;" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <title>Pokemon &amp; TCG shows — PackEV</title>
+  <meta name="description" content="Where Pokemon and trading card shows happen near major English-speaking capitals and hub cities. Curated real events — confirm dates with organizers." />
+  <meta name="robots" content="index,follow" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <nav class="nav">
+      <span class="brand">PackEV</span>
+      <a href="index.html">Sets</a>
+      <a href="prices.html">Prices</a>
+      <a href="rip.html">Pack EV</a>
+      <a href="shows.html">Shows</a>
+      <a href="forum.html">Forum</a>
+      <a href="about.html">About</a>
+      <span id="auth-nav" class="auth-nav">
+        <a href="join.html">Join</a>
+        <a href="login.html">Log in</a>
+      </span>
+    </nav>
+
+    <div class="card">
+      <span class="pill">EVENTS</span>
+      <h1>Pokemon &amp; TCG shows</h1>
+      <p class="lead">
+        Upcoming and recent conventions near capitals and major hub cities in
+        <strong>English-speaking</strong> countries only. Organized by country —
+        capital labeled clearly; U.S./Canada/AU shows often use big metros, not only the capital.
+      </p>
+      <div class="warn">
+        Curated static list from public organizer pages — <strong>not DEMO filler</strong>.
+        Dates change; always verify the organizer link before travelling.
+        PackEV is not affiliated with The Pokémon Company or any show promoter.
+        <span id="shows-updated" class="sub"></span>
+      </div>
+
+      <div class="toolbar shows-toolbar">
+        <div style="flex:1;min-width:180px">
+          <label for="country-filter">Country</label>
+          <select id="country-filter">
+            <option value="">All countries</option>
+          </select>
+        </div>
+        <div style="flex:2;min-width:200px">
+          <label for="show-q">Filter by city or event</label>
+          <input id="show-q" type="search" placeholder="e.g. London, Melbourne, PokeKon…" autocomplete="off" />
+        </div>
+      </div>
+
+      <div id="shows-status" class="expand-status" aria-live="polite"></div>
+      <div id="shows-jump" class="shows-jump" hidden></div>
+      <div id="shows-root"></div>
+    </div>
+    <footer>PackEV · curated show directory</footer>
+  </div>
+  <script src="border.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/shows.js"></script>
+</body>
+</html>
