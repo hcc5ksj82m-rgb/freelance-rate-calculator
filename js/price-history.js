@@ -13,6 +13,8 @@
   ];
 
   var TIP_BUILD = 'More history builds daily';
+  var TIP_FLAT = 'History is just starting — snapshots are still flat for this card';
+  var TIP_CM = 'Short anchors from Cardmarket avgs (EUR shape scaled to USD spot)';
 
   function cfg() {
     return root.PACK_EV_SUPABASE || {};
@@ -55,6 +57,26 @@
     if (!(first > 0)) return null;
     var pct = ((last - first) / first) * 100;
     return { first: first, last: last, abs: last - first, pct: pct };
+  }
+
+  /** True when all values are effectively equal (no visible movement). */
+  function isFlatSeries(points) {
+    if (!points || points.length < 2) return true;
+    var min = points[0].value;
+    var max = points[0].value;
+    for (var i = 1; i < points.length; i++) {
+      var v = points[i].value;
+      if (v < min) min = v;
+      if (v > max) max = v;
+    }
+    if (!(max > 0)) return true;
+    return (max - min) / max < 0.005; /* <0.5% spread */
+  }
+
+  function hasCardmarketAnchors(points) {
+    return (points || []).some(function (p) {
+      return String(p.source || '').indexOf('cardmarket') === 0;
+    });
   }
 
   function filterByRange(points, rangeId) {
@@ -226,6 +248,19 @@
         return;
       }
 
+      var flat = isFlatSeries(seriesPts);
+      if (flat) {
+        /* Honest empty-state when snapshots have not moved yet */
+        paintEmpty(TIP_FLAT + '. ' + TIP_BUILD + '.');
+        rebuildChips(avail);
+        Array.prototype.forEach.call(rangesEl.querySelectorAll('.phist-chip'), function (btn) {
+          var on = btn.dataset.range === state.range;
+          btn.classList.toggle('active', on);
+          btn.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        return;
+      }
+
       /* restore canvas if we swapped in empty state */
       if (!canvas || canvas.hidden || !wrap.contains(canvas)) {
         wrap.innerHTML = '<canvas></canvas>';
@@ -256,9 +291,11 @@
         var b = new Date(seriesPts[seriesPts.length - 1].date + 'T12:00:00');
         return Math.max(0, Math.round((b - a) / 86400000));
       })();
-      noteEl.textContent = seriesPts.length + ' points'
-        + (spanDays ? ' · ~' + spanDays + 'd span' : '')
-        + ' · ' + TIP_BUILD;
+      var noteBits = [seriesPts.length + ' points'];
+      if (spanDays) noteBits.push('~' + spanDays + 'd span');
+      if (hasCardmarketAnchors(seriesPts)) noteBits.push(TIP_CM);
+      noteBits.push(TIP_BUILD);
+      noteEl.textContent = noteBits.join(' · ');
 
       destroyChart();
 
@@ -358,6 +395,7 @@
     fetchHistory: fetchHistory,
     availableRanges: availableRanges,
     filterByRange: filterByRange,
+    isFlatSeries: isFlatSeries,
     mount: mount,
     unmount: unmount,
     fmtMoney: fmtMoney

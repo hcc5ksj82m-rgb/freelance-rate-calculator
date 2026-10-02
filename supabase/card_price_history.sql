@@ -30,3 +30,9 @@ create policy "card_price_history_select_public"
   using (true);
 
 -- No INSERT / UPDATE / DELETE policies for anon or authenticated.
+
+-- Optional short history anchors (see scripts/backfill-cm-history.py):
+-- Cardmarket avg30/avg7/avg1 are EUR. Backfill scales them to USD via
+-- market_price_usd / averageSellPrice and stores on today-30 / today-7 / today-2
+-- with sources cardmarket_avg30|avg7|avg1. Outliers outside 0.25x–4x of catalog
+-- USD are skipped so the chart stays coherent with catalog snapshots.
