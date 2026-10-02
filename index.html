@@ -34,6 +34,17 @@
         <div><label>Search sets or cards</label><input id="q" type="search" placeholder="Set or card name — e.g. Evolving Skies, Charizard, Umbreon VMAX" /></div>
         <div><label>Series filter</label><select id="series"><option value="">All series</option></select></div>
       </div>
+      <div class="toolbar sets-toolbar">
+        <div style="flex:0 1 200px;min-width:140px">
+          <label for="sort">Sort sets</label>
+          <select id="sort">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="az">Name A–Z</option>
+            <option value="za">Name Z–A</option>
+          </select>
+        </div>
+      </div>
       <div id="card-matches" class="card-matches" hidden>
         <h2>Matching cards</h2>
         <div id="card-matches-status" class="expand-status"></div>
@@ -329,9 +340,19 @@
         function render(){
       const q = document.getElementById('q').value.toLowerCase();
       const ser = seriesSel.value;
+      const sort = (document.getElementById('sort') || {}).value || 'newest';
       const list = sets.filter(s =>
         (!ser || s.series === ser) && (s.name + s.series + s.id).toLowerCase().includes(q)
       );
+      list.sort((a, b) => {
+        if (sort === 'az') return String(a.name || '').localeCompare(String(b.name || ''));
+        if (sort === 'za') return String(b.name || '').localeCompare(String(a.name || ''));
+        const da = a.releaseDate || '';
+        const db = b.releaseDate || '';
+        if (sort === 'oldest') return da.localeCompare(db) || String(a.id).localeCompare(String(b.id));
+        // newest (default)
+        return db.localeCompare(da) || String(b.id).localeCompare(String(a.id));
+      });
       const openId = (document.querySelector('tr.set-row.open') || {}).dataset
         ? document.querySelector('tr.set-row.open').dataset.id
         : null;
@@ -398,6 +419,8 @@
       scheduleCardSearch();
     };
     seriesSel.onchange = render;
+    const sortSel = document.getElementById('sort');
+    if (sortSel) sortSel.onchange = render;
   </script>
 </body>
 </html>

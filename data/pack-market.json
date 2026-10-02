@@ -1,7 +1,7 @@
 {
   "source": "ebay_sold",
   "status": "links_ready_api_pending",
-  "note": "Official eBay last-sold API (Marketplace Insights) needs business approval. Until credentials exist, each set links to live eBay Sold results. Do not use release-era MSRP as market. Daily refresh: sets.json card counts + EV profiles updated 2026-10-02 Sydney.",
-  "updated": "2026-10-02",
+  "note": "Official eBay last-sold API (Marketplace Insights) needs business approval. Until credentials exist, each set links to live eBay Sold results. Do not use release-era MSRP as market. Daily refresh: sets.json card counts + EV profiles updated 2026-10-03 Sydney.",
+  "updated": "2026-10-03",
   "packs": {}
 }
