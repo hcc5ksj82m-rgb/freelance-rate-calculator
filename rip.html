@@ -41,6 +41,14 @@
             · <a id="setPageLink" href="set.html">Open set page →</a>
             · <a id="pricesLink" href="prices.html">Search card prices →</a></p>
           <p class="tip" id="profileTip"></p>
+          <div id="chaseLive" class="chase-live" hidden>
+            <div class="chase-live-head">
+              <span class="badge live">LIVE</span>
+              <span class="tip">Top catalog chase prices for this set (TCGPlayer snapshots)</span>
+            </div>
+            <div id="chaseLiveList" class="chase-live-list"></div>
+            <p class="tip" id="chaseLiveHint"></p>
+          </div>
         </div>
         <div>
           <label>Market pack cost ($ from eBay sold)</label>
@@ -76,6 +84,8 @@
     </div>
     <footer>PackEV</footer>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
   <script>
     const $ = id => document.getElementById(id);
     const params = new URLSearchParams(location.search);
@@ -95,6 +105,106 @@
       const v = Number(n);
       if (!Number.isFinite(v)) return '—';
       return (v >= 0 ? '$' : '-$') + Math.abs(v).toFixed(2);
+    }
+
+
+    let chaseLiveGen = 0;
+
+    function moneyPlain(n) {
+      const v = Number(n);
+      if (!Number.isFinite(v)) return '—';
+      if (Math.abs(v) >= 1000) return '$' + Math.round(v).toLocaleString();
+      return '$' + v.toFixed(2);
+    }
+
+    async function loadChaseLive(setId) {
+      const box = $('chaseLive');
+      const list = $('chaseLiveList');
+      const hint = $('chaseLiveHint');
+      if (!box || !list || !hint) return;
+      const gen = ++chaseLiveGen;
+      box.hidden = false;
+      list.innerHTML = '<span class="tip">Loading live chase…</span>';
+      hint.textContent = '';
+      const cfg = window.PACK_EV_SUPABASE || {};
+      const base = String(cfg.SUPABASE_URL || '').replace(/\/$/, '');
+      const key = String(cfg.SUPABASE_ANON_KEY || cfg.SUPABASE_PUBLISHABLE_KEY || '');
+      if (!base || !key || !setId) {
+        box.hidden = true;
+        return;
+      }
+      try {
+        const url = base + '/rest/v1/cards'
+          + '?select=id,name,number,rarity,market_price_usd,image_small'
+          + '&set_id=eq.' + encodeURIComponent(setId)
+          + '&market_price_usd=not.is.null&market_price_usd=gte.15'
+          + '&order=market_price_usd.desc&limit=5';
+        const res = await fetch(url, {
+          headers: {
+            Accept: 'application/json',
+            apikey: key,
+            Authorization: 'Bearer ' + key
+          }
+        });
+        if (gen !== chaseLiveGen) return;
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const rows = await res.json();
+        if (gen !== chaseLiveGen) return;
+        if (!Array.isArray(rows) || !rows.length) {
+          list.innerHTML = '<span class="tip">No $15+ chase prices in catalog for this set yet.</span>';
+          hint.textContent = 'Use the era default above, or check Prices search.';
+          return;
+        }
+        list.innerHTML = '';
+        rows.forEach(function (r) {
+          const a = document.createElement('a');
+          a.className = 'chase-chip';
+          a.href = 'card.html?id=' + encodeURIComponent(r.id);
+          a.title = (r.name || '') + ' · ' + (r.rarity || '');
+          const img = document.createElement('img');
+          img.className = 'thumb';
+          img.alt = '';
+          img.loading = 'lazy';
+          if (r.image_small) img.src = r.image_small;
+          const meta = document.createElement('span');
+          meta.className = 'chase-chip-meta';
+          meta.innerHTML = '<b>' + moneyPlain(r.market_price_usd) + '</b>'
+            + '<span class="sub">' + String(r.name || '').slice(0, 22) + '</span>';
+          a.appendChild(img);
+          a.appendChild(meta);
+          const use = document.createElement('button');
+          use.type = 'button';
+          use.className = 'chase-use';
+          use.textContent = 'Use';
+          use.onclick = function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $('chase').value = Number(r.market_price_usd).toFixed(2);
+            calc();
+          };
+          a.appendChild(use);
+          list.appendChild(a);
+        });
+        const avg = rows.reduce(function (s, r) { return s + Number(r.market_price_usd); }, 0) / rows.length;
+        hint.innerHTML = '';
+        const tip = document.createTextNode(
+          'Avg of these LIVE hits: ' + moneyPlain(avg) + '. '
+        );
+        hint.appendChild(tip);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'linkish';
+        btn.textContent = 'Fill chase with avg';
+        btn.onclick = function () {
+          $('chase').value = avg.toFixed(2);
+          calc();
+        };
+        hint.appendChild(btn);
+      } catch (err) {
+        if (gen !== chaseLiveGen) return;
+        list.innerHTML = '<span class="tip">Could not load live chase right now.</span>';
+        hint.textContent = String(err && err.message ? err.message : err);
+      }
     }
 
     function fillSetOptions(filterText) {
@@ -138,6 +248,7 @@
       $('profileTip').textContent = 'EV profile: ' + label
         + (s.packMsrpUsd != null ? ' · era MSRP hint $' + Number(s.packMsrpUsd).toFixed(2) + ' (not market)' : '')
         + (s.cardCount != null ? ' · ' + s.cardCount + ' cards in set' : '');
+      loadChaseLive(s.id);
       calc();
     }
 
@@ -196,8 +307,6 @@
     });
   </script>
   <script src="border.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase-config.js"></script>
   <script src="js/auth.js"></script>
 
 </body>

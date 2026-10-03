@@ -1,7 +1,7 @@
 {
   "source": "ebay_sold",
   "status": "links_ready_api_pending",
-  "note": "Official eBay last-sold API (Marketplace Insights) needs business approval. Until credentials exist, each set links to live eBay Sold results. Do not use release-era MSRP as market. Afternoon check 2026-10-03 Sydney: Pokemon TCG API /v2/sets healthy after one HTTP 500 retry; 176 sets, names, series, release dates, and card totals unchanged. Custom EV and eBay fields kept.",
-  "updated": "2026-10-03",
+  "note": "Official eBay last-sold API (Marketplace Insights) needs business approval. Until credentials exist, each set links to live eBay Sold results. Do not use release-era MSRP as market. Morning check 2026-10-04 Sydney: Pokemon TCG API /v2/sets OK after retries; 176 sets unchanged (order ties reshuffled only). Custom EV and eBay fields kept. Price snapshot: 18,365 catalog history rows for 2026-10-04; refreshed 22 LIVE TCGPlayer chase prices (Umbreon VMAX, Giratina V alt, Prismatic Umbreon ex, Base Charizard, etc.).",
+  "updated": "2026-10-04",
   "packs": {}
 }
