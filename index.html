@@ -45,6 +45,7 @@
           </select>
         </div>
       </div>
+      <p class="tip" id="shown"></p>
       <div id="card-matches" class="card-matches" hidden>
         <h2>Matching cards</h2>
         <div id="card-matches-status" class="expand-status"></div>
@@ -356,7 +357,21 @@
       const openId = (document.querySelector('tr.set-row.open') || {}).dataset
         ? document.querySelector('tr.set-row.open').dataset.id
         : null;
+      const shown = document.getElementById('shown');
+      if (shown) {
+        shown.textContent = list.length === sets.length
+          ? ''
+          : ('Showing ' + list.length + ' of ' + sets.length + ' sets');
+      }
       rows.innerHTML = '';
+      if (!list.length) {
+        const safeQ = q.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+        rows.innerHTML = '<tr><td colspan="5">No sets match'
+          + (safeQ ? ' “' + safeQ + '”' : ' this filter')
+          + (q.length >= 2 ? '. Card matches stay above — the full catalog is not loaded here.' : '.')
+          + '</td></tr>';
+        return;
+      }
       list.forEach(s => {
         const tr = document.createElement('tr');
         tr.className = 'set-row';

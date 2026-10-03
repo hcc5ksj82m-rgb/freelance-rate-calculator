@@ -138,7 +138,31 @@
     location.href = 'card.html?id=' + encodeURIComponent(id);
   }
 
-  function paintSearchResults(cards) {
+  function nameRank(card, query) {
+    var name = String(card.name || '').toLowerCase();
+    var q = String(query || '').trim().toLowerCase();
+    if (!q) return 3;
+    if (name === q) return 0;
+    if (name.indexOf(q) === 0) return 1;
+    var words = name.split(/\s+/);
+    for (var i = 0; i < words.length; i++) {
+      if (words[i].indexOf(q) === 0) return 2;
+    }
+    return 3;
+  }
+
+  function highlightName(name, query) {
+    var src = String(name || '');
+    var q = String(query || '').trim();
+    if (q.length < 2) return esc(src);
+    var i = src.toLowerCase().indexOf(q.toLowerCase());
+    if (i < 0) return esc(src);
+    return esc(src.slice(0, i))
+      + '<mark class="qmark">' + esc(src.slice(i, i + q.length)) + '</mark>'
+      + esc(src.slice(i + q.length));
+  }
+
+  function paintSearchResults(cards, query) {
     var status = els.searchStatus;
     var grid = els.searchGrid;
     var chart = els.searchChart;
@@ -158,12 +182,16 @@
       + ' · click a card for details + history';
 
     var max = Math.max.apply(null, cards.map(function (c) { return Number(c.price) || 0 }).concat([1]));
-    chart.innerHTML = cards.slice(0, 12).map(function (c) {
-      var h = Math.max(8, Math.round(((Number(c.price) || 0) / max) * 140));
+    chart.innerHTML = '<p class="chart-caption tip">Market price of these results (taller = higher). Exact name matches are listed first.</p><div class="chart-bars">'
+      + cards.slice(0, 12).map(function (c) {
+      var h = Math.max(8, Math.round(((Number(c.price) || 0) / max) * 108));
       var label = (c.name || '').split(' ').slice(0, 2).join(' ');
-      return '<div class="bar-wrap"><div class="bar" style="height:' + h + 'px"></div>'
+      var val = c.price != null ? fmtMoney(c.price, c.currency) : '—';
+      return '<div class="bar-wrap" title="' + esc(c.name) + ' ' + esc(val) + '">'
+        + '<div class="bar-val">' + esc(val) + '</div>'
+        + '<div class="bar" style="height:' + h + 'px"></div>'
         + '<div class="bar-label">' + esc(label) + '</div></div>';
-    }).join('');
+    }).join('') + '</div>';
 
     grid.innerHTML = cards.map(function (c) {
       var badge = c.priceStatus === 'live'
@@ -178,7 +206,7 @@
       return '<article class="price-card" tabindex="0" role="button" data-id="' + esc(c.id) + '" aria-label="Open card page for ' + esc(c.name) + '">'
         + img
         + '<div class="m">'
-        + '<strong>' + esc(c.name) + '</strong>'
+        + '<strong>' + highlightName(c.name, query) + '</strong>'
         + '<div class="tip">#' + esc(c.number || '?') + ' · ' + esc(c.rarity || '—') + '</div>'
         + '<div class="tip set-of">' + setLink + '</div>'
         + '<div class="price">' + (c.price != null ? fmtMoney(c.price, c.currency) : '—') + ' ' + badge + '</div>'
@@ -237,8 +265,13 @@
         var result = await window.PackEVCards.searchByName(raw, SEARCH_LIMIT);
         if (gen !== searchGen) return;
         var cards = (result.cards || []).map(normalizeCard);
-        cards.sort(function (a, b) { return (Number(b.price) || 0) - (Number(a.price) || 0); });
-        paintSearchResults(cards);
+        cards.sort(function (a, b) {
+          var ra = nameRank(a, raw);
+          var rb = nameRank(b, raw);
+          if (ra !== rb) return ra - rb;
+          return (Number(b.price) || 0) - (Number(a.price) || 0);
+        });
+        paintSearchResults(cards, raw);
       } catch (e) {
         if (gen !== searchGen) return;
         els.searchStatus.classList.add('expand-error');
@@ -253,6 +286,39 @@
     }, SEARCH_DEBOUNCE);
   }
 
+  function fmtSnapshotDay(iso) {
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+    if (!m) return '';
+    return String(Number(m[3])) + ' ' + months[Number(m[2]) - 1] + ' ' + m[1];
+  }
+
+  /** One-row read of the newest history day. Does not load the card catalog. */
+  async function loadFreshness() {
+    var el = document.getElementById('freshness');
+    if (!el) return;
+    var cfg = window.PACK_EV_SUPABASE || {};
+    var base = String(cfg.SUPABASE_URL || '').replace(/\/$/, '');
+    var key = String(cfg.SUPABASE_ANON_KEY || cfg.SUPABASE_PUBLISHABLE_KEY || '');
+    if (!base || !key) {
+      el.hidden = true;
+      return;
+    }
+    try {
+      var res = await fetch(base + '/rest/v1/card_price_history?select=day&order=day.desc&limit=1', {
+        headers: { Accept: 'application/json', apikey: key, Authorization: 'Bearer ' + key }
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      var rows = await res.json();
+      var day = rows && rows[0] && rows[0].day;
+      var label = fmtSnapshotDay(day);
+      if (!label) throw new Error('empty');
+      el.textContent = 'Catalog price snapshot through ' + label + ' (Sydney). Search to see cards — nothing loads until you type.';
+    } catch (_) {
+      el.textContent = 'Search the catalog by name. Cards load only after you type.';
+    }
+  }
+
   function init() {
     els = {
       q: $('q'),
@@ -263,6 +329,7 @@
     };
     if (!els.q) return;
     els.q.addEventListener('input', scheduleSearch);
+    loadFreshness();
     els.searchGrid.addEventListener('click', onGridActivate);
     els.searchGrid.addEventListener('keydown', onGridKey);
     /* Deep-link from rip.html / shares: prices.html?q=Charizard */

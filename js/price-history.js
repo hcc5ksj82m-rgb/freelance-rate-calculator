@@ -41,6 +41,8 @@
     return fmtDay(d);
   }
 
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
   function fmtMoney(n, currency) {
     if (n == null || isNaN(n)) return '—';
     var prefix = currency === 'EUR' ? '€' : '$';
@@ -48,6 +50,36 @@
       return prefix + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
     }
     return prefix + Number(n).toFixed(2);
+  }
+
+  /** YYYY-MM-DD → "3 Oct" (axis). Avoids slicing the year into "26-10-03". */
+  function fmtAxisDay(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+    if (!m) return String(iso || '');
+    return String(Number(m[3])) + ' ' + MONTHS[Number(m[2]) - 1];
+  }
+
+  function fmtLongDay(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+    if (!m) return String(iso || '');
+    return String(Number(m[3])) + ' ' + MONTHS[Number(m[2]) - 1] + ' ' + m[1];
+  }
+
+  /** Pad the Y scale so a flat or tiny move stays a readable line, not a crushed edge. */
+  function yBounds(values) {
+    var min = values[0];
+    var max = values[0];
+    for (var i = 1; i < values.length; i++) {
+      if (values[i] < min) min = values[i];
+      if (values[i] > max) max = values[i];
+    }
+    var span = max - min;
+    var pad = span > 0
+      ? Math.max(span * 0.45, Math.abs(max) * 0.02, 0.05)
+      : Math.max(Math.abs(max) * 0.08, 0.25);
+    var lo = min - pad;
+    if (lo < 0 && min >= 0) lo = 0;
+    return { min: lo, max: max + pad };
   }
 
   function changeStats(points) {
@@ -249,17 +281,6 @@
       }
 
       var flat = isFlatSeries(seriesPts);
-      if (flat) {
-        /* Honest empty-state when snapshots have not moved yet */
-        paintEmpty(TIP_FLAT + '. ' + TIP_BUILD + '.');
-        rebuildChips(avail);
-        Array.prototype.forEach.call(rangesEl.querySelectorAll('.phist-chip'), function (btn) {
-          var on = btn.dataset.range === state.range;
-          btn.classList.toggle('active', on);
-          btn.setAttribute('aria-selected', on ? 'true' : 'false');
-        });
-        return;
-      }
 
       /* restore canvas if we swapped in empty state */
       if (!canvas || canvas.hidden || !wrap.contains(canvas)) {
@@ -293,6 +314,8 @@
       })();
       var noteBits = [seriesPts.length + ' points'];
       if (spanDays) noteBits.push('~' + spanDays + 'd span');
+      noteBits.push('latest ' + fmtLongDay(seriesPts[seriesPts.length - 1].date));
+      if (flat) noteBits.push(TIP_FLAT);
       if (hasCardmarketAnchors(seriesPts)) noteBits.push(TIP_CM);
       noteBits.push(TIP_BUILD);
       noteEl.textContent = noteBits.join(' · ');
@@ -301,6 +324,7 @@
 
       var labels = seriesPts.map(function (p) { return p.date; });
       var data = seriesPts.map(function (p) { return p.value; });
+      var bounds = yBounds(data);
 
       container._packEvChart = new Chart(canvas.getContext('2d'), {
         type: 'line',
@@ -327,6 +351,10 @@
             legend: { display: false },
             tooltip: {
               callbacks: {
+                title: function (items) {
+                  var iso = items && items[0] && items[0].label;
+                  return fmtLongDay(iso);
+                },
                 label: function (ctx) {
                   return fmtMoney(ctx.parsed.y, currency);
                 }
@@ -338,21 +366,23 @@
               ticks: {
                 maxTicksLimit: 6,
                 color: '#64748b',
-                font: { size: 10 },
-                callback: function (val, i) {
-                  var lab = labels[i] || '';
-                  return lab.length >= 7 ? lab.slice(2) : lab;
+                font: { size: 11 },
+                callback: function (val) {
+                  return fmtAxisDay(this.getLabelForValue(val));
                 }
               },
               grid: { display: false }
             },
             y: {
+              min: bounds.min,
+              max: bounds.max,
               ticks: {
+                maxTicksLimit: 5,
                 color: '#64748b',
-                font: { size: 10 },
+                font: { size: 11 },
                 callback: function (v) { return fmtMoney(v, currency); }
               },
-              grid: { color: 'rgba(148,163,184,.25)' }
+              grid: { color: 'rgba(148,163,184,.35)' }
             }
           }
         }
