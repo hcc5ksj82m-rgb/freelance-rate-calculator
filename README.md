@@ -10,6 +10,8 @@ Live: https://hcc5ksj82m-rgb.github.io/freelance-rate-calculator/
 - The page makes no API requests until a card name is searched.
 - **History chart:** click a search result (or a card on a set page) for a clean line chart. Data comes from `public.card_price_history` (anon read). Range chips that lack enough points are hidden; tip: “More history builds daily.”
 - **$0 history:** daily snapshots of `cards.market_price_usd`. One-time Cardmarket avg1/avg7/avg30 backfill (~1/7/30 days ago) only for cards **without** TCGPlayer prices (avoids mixing USD/EUR on one chart). No paid APIs. Daily routine: after catalog sync run `scripts/snapshot-prices.py` or `sync-pokemon-cards.py --snapshot-history` / `--snapshot-only`.
+- **Latest movers (home):** `public.card_daily_movers` view (security_invoker, anon SELECT) compares each LIVE-refreshed card's newest `live_api` price with its previous snapshot. The daily routine refreshes the ~150 most valuable catalog cards plus chase cards from the Pokemon TCG API (`source='live_api'`), then snapshots everything else as `catalog`. If the API drops a card's priced variant (e.g. reverse holo gone, only normal left), keep the previous price instead of logging a fake crash.
+
 
 ## Full catalog (Supabase)
 

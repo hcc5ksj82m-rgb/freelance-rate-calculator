@@ -30,6 +30,7 @@
       <h1>Pokemon TCG sets</h1>
       <p class="lead">Explore sets and search for cards by name, with photos and live market prices when available. <span id="count">…</span> sets loaded.</p>
       <div class="warn">Pack links open live eBay Sold results (not release MSRP). Card prices come from our catalog (TCGPlayer / Cardmarket snapshots).</div>
+      <section id="movers" class="movers" hidden aria-live="polite"></section>
       <div class="grid two">
         <div><label>Search sets or cards</label><input id="q" type="search" placeholder="Set or card name — e.g. Evolving Skies, Charizard, Umbreon VMAX" /></div>
         <div><label>Series filter</label><select id="series"><option value="">All series</option></select></div>
@@ -64,6 +65,7 @@
   <script src="js/auth.js"></script>
   <script src="js/graded.js"></script>
   <script src="js/cards-fetch.js"></script>
+  <script src="js/movers.js" defer></script>
 
   <script>
     let sets = [];

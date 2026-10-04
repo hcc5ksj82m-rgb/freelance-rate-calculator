@@ -391,3 +391,20 @@ button.linkish{
   .chase-chip{flex:1 1 calc(50% - .45rem);min-width:140px}
   .chase-chip-meta .sub{max-width:7.5rem}
 }
+
+/* Today's movers (home) */
+.movers{margin:1rem 0 .5rem;padding:.85rem;border:1px solid var(--line);border-radius:14px;background:#fffdf7}
+.movers-head h2{margin:0 0 .2rem;font-size:1.05rem;display:flex;align-items:center;gap:.45rem}
+.movers-head .tip{display:block;margin:0 0 .6rem}
+.movers-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.movers-col h3{margin:0 0 .4rem;font-size:.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.mover{display:flex;gap:.55rem;align-items:center;padding:.35rem;border-radius:10px;color:inherit;text-decoration:none}
+.mover:hover{background:#f8fafc;text-decoration:none}
+.mover:focus{outline:2px solid #f59e0b;outline-offset:1px}
+.mover img,.mover-ph{width:42px;aspect-ratio:63/88;object-fit:cover;border-radius:4px;background:#f1f5f9;flex:none}
+.mover-m{display:flex;flex-direction:column;min-width:0;font-size:.8rem}
+.mover-m strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#0f172a}
+.mover-m .tip{margin:0;font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mover-p{font-weight:800;color:#b45309}
+.mover-p .up,.mover-p .down{font-weight:700;margin-left:.25rem}
+@media (max-width:640px){.movers-grid{grid-template-columns:1fr}}
