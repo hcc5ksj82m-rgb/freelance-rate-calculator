@@ -1,7 +1,7 @@
 {
   "source": "ebay_sold",
   "status": "links_ready_api_pending",
-  "note": "Official eBay last-sold API (Marketplace Insights) needs business approval. Until credentials exist, each set links to live eBay Sold results. Do not use release-era MSRP as market. Morning check 2026-10-05 Sydney: Pokemon TCG API /v2/sets OK after one retry; 176 sets unchanged. Custom EV and eBay fields kept. Price snapshot: 18,364 history rows for 2026-10-04 (UTC); LIVE TCGPlayer refresh widened from 22 chase cards to the top 158 most valuable cards. Home page now shows Latest movers (day-over-day % for LIVE cards) from the card_daily_movers view.",
-  "updated": "2026-10-05",
+  "note": "Official eBay last-sold API (Marketplace Insights) needs business approval. Until credentials exist, each set links to live eBay Sold results. Do not use release-era MSRP as market. Morning check 2026-10-06 Sydney: Pokemon TCG API /v2/sets OK; 176 sets unchanged (names, series, release dates, card counts and order identical). Custom EV and eBay fields kept. Price snapshot: 18,365 history rows for 2026-10-05 (UTC market day, matching TCGPlayer updatedAt 2026/10/05): 162 LIVE TCGPlayer cards (top 150 by value plus previously tracked chase cards; card lookups retried through API 500/502s) and 18,203 catalog rows. 20 LIVE prices moved; base6-95 kept at its previous reverse-holo price because the API dropped that variant. Shows refreshed with verified upcoming events and an Upcoming-only filter.",
+  "updated": "2026-10-06",
   "packs": {}
 }
