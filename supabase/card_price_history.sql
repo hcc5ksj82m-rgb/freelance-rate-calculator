@@ -31,6 +31,35 @@ create policy "card_price_history_select_public"
 
 -- No INSERT / UPDATE / DELETE policies for anon or authenticated.
 
+-- Completed sales (eBay or otherwise). The chart prefers these over daily snapshots.
+-- Daily price = average of the last 10 sales. Monthly price = average of those
+-- daily prices. The 20-year chart uses only rows that exist — do not backfill gaps.
+-- Writes are service_role only (no insert policy for anon/authenticated).
+
+create table if not exists public.card_sold_comps (
+  id bigint generated always as identity primary key,
+  card_id text not null references public.cards(id) on delete cascade,
+  sold_at timestamptz not null,
+  price_usd numeric not null check (price_usd > 0),
+  source text not null default 'ebay_sold',
+  listing_title text
+);
+
+comment on table public.card_sold_comps is
+  'Individual completed sales. Charts average the last 10 into the daily price.';
+
+create index if not exists card_sold_comps_card_sold_idx
+  on public.card_sold_comps (card_id, sold_at desc);
+
+alter table public.card_sold_comps enable row level security;
+
+drop policy if exists "card_sold_comps_select_public" on public.card_sold_comps;
+create policy "card_sold_comps_select_public"
+  on public.card_sold_comps
+  for select
+  to anon, authenticated
+  using (true);
+
 -- Optional short history anchors (see scripts/backfill-cm-history.py):
 -- Cardmarket avg30/avg7/avg1 are EUR. Backfill scales them to USD via
 -- market_price_usd / averageSellPrice and stores on today-30 / today-7 / today-2

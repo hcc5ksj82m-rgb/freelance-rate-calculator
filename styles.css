@@ -263,6 +263,51 @@ button:disabled{opacity:.55;cursor:not-allowed;filter:none}
 }
 .forum-compose textarea:focus{outline:2px solid #fbbf24;outline-offset:1px;border-color:#f59e0b}
 .forum-compose button{width:auto;min-width:160px}
+.wrap-wide{max-width:1100px}
+.forum-toolbar{display:flex;flex-wrap:wrap;gap:.65rem;align-items:flex-end;margin:.2rem 0 .9rem}
+.forum-toolbar .grow{flex:1;min-width:200px}
+.forum-toolbar input,.forum-toolbar select{width:100%}
+.forum-search{display:flex;gap:.45rem;align-items:center}
+.forum-search input{flex:1;min-width:0}
+.forum-search button,.forum-new,.forum-actions button,.forum-tools button,.forum-pager a,.forum-pager button{
+  width:auto;margin:0;padding:.55rem .8rem;font-size:.8rem;border-radius:10px;
+}
+.forum-new{background:#0f172a;color:#fff}
+.forum-actions button,.forum-tools button,.forum-pager a,.forum-pager button{
+  background:#fff;color:#0f172a;border:1px solid var(--line);font-weight:700;text-decoration:none;
+}
+.forum-actions button:hover,.forum-tools button:hover,.forum-pager a:hover{text-decoration:none;border-color:#f59e0b}
+.forum-tools{display:flex;gap:.35rem;margin:.35rem 0}
+.forum-count{margin:.2rem 0 0;font-size:.75rem;color:var(--muted)}
+.forum-thread-top{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start}
+.forum-reply-count{flex:0 0 auto;text-align:right;min-width:4.2rem}
+.forum-reply-count b{display:block;font-size:1.05rem;color:#0f172a;line-height:1.1}
+.forum-reply-count span{font-size:.66rem;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.forum-actions{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.55rem}
+.forum-you{
+  display:inline-block;margin-left:.3rem;padding:.05rem .35rem;border-radius:999px;
+  background:#ffedd5;color:#9a3412;font-size:.68rem;font-weight:800;vertical-align:middle;
+}
+.forum-quote{
+  display:block;margin:.2rem 0;padding:.15rem 0 .15rem .6rem;
+  border-left:3px solid #f59e0b;color:#475569;
+}
+.forum-pager{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin:.85rem 0 .2rem}
+.forum-pager .here{font-weight:800;color:#0f172a}
+.forum-stats{display:flex;flex-wrap:wrap;gap:.45rem;margin:.35rem 0 .8rem}
+.forum-stats span{
+  background:var(--soft);border:1px solid var(--line);border-radius:999px;
+  padding:.2rem .6rem;font-size:.75rem;font-weight:700;color:#334155;
+}
+.phist-controls{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:space-between;align-items:center}
+.phist-chip:disabled{opacity:.4;cursor:not-allowed}
+.phist-sub{display:block;font-size:.75rem;font-weight:650;color:var(--muted)}
+.phist-chart-wrap{height:280px}
+.sold-stats{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.45rem 0 .35rem}
+.sold-stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:.55rem .7rem}
+.sold-stat span{display:block;font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.sold-stat b{display:block;margin-top:.15rem;font-size:1.15rem;color:#0f172a}
+.sold-stat em{display:block;margin-top:.1rem;font-style:normal;font-size:.72rem;font-weight:650;color:var(--muted)}
 
 /* Price history (Google-style range chips + line chart) */
 .history-panel{

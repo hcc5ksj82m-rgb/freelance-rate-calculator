@@ -67,3 +67,89 @@ insert into public.forum_categories (id, title, description, sort_order) values
   ('pulls-rips', 'Pulls & Rips', 'Share openings and chase hits.', 3),
   ('rules-tips', 'Rules & Tips', 'Site rules, scam warnings, collecting advice.', 4)
 on conflict (id) do nothing;
+
+-- Activity + reply stats. Re-run this file in the SQL editor so names, counts, and deletes work.
+alter table public.forum_threads
+  add column if not exists reply_count integer not null default 0;
+alter table public.forum_threads
+  add column if not exists last_reply_at timestamptz;
+alter table public.forum_replies
+  add column if not exists updated_at timestamptz not null default now();
+
+create index if not exists forum_threads_cat_updated_idx
+  on public.forum_threads (category_id, updated_at desc);
+create index if not exists forum_replies_thread_created_idx
+  on public.forum_replies (thread_id, created_at desc);
+
+create or replace function public.forum_refresh_thread_stats(tid uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.forum_threads t
+  set
+    reply_count = coalesce(s.n, 0),
+    last_reply_at = s.last_at,
+    updated_at = greatest(t.updated_at, coalesce(s.last_at, t.updated_at))
+  from (
+    select count(*)::integer as n, max(created_at) as last_at
+    from public.forum_replies
+    where thread_id = tid
+  ) s
+  where t.id = tid;
+end;
+$$;
+
+create or replace function public.forum_replies_stats_trigger()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  tid uuid;
+begin
+  tid := coalesce(new.thread_id, old.thread_id);
+  perform public.forum_refresh_thread_stats(tid);
+  return null;
+end;
+$$;
+
+drop trigger if exists forum_replies_stats on public.forum_replies;
+create trigger forum_replies_stats
+  after insert or update or delete on public.forum_replies
+  for each row execute function public.forum_replies_stats_trigger();
+
+update public.forum_threads t
+set
+  reply_count = sub.n,
+  last_reply_at = sub.last_at,
+  updated_at = greatest(t.updated_at, coalesce(sub.last_at, t.updated_at))
+from (
+  select thread_id, count(*)::integer as n, max(created_at) as last_at
+  from public.forum_replies
+  group by thread_id
+) sub
+where t.id = sub.thread_id;
+
+drop policy if exists "forum_threads_delete_own" on public.forum_threads;
+create policy "forum_threads_delete_own"
+  on public.forum_threads for delete to authenticated
+  using (auth.uid() = author_id);
+
+drop policy if exists "forum_replies_delete_own" on public.forum_replies;
+create policy "forum_replies_delete_own"
+  on public.forum_replies for delete to authenticated
+  using (auth.uid() = author_id);
+
+-- Display names for the forum. Profile rows stay private; this view exposes name only.
+create or replace view public.forum_authors
+with (security_invoker = false) as
+select id, display_name
+from public.profiles
+where display_name is not null
+  and length(btrim(display_name)) > 0;
+
+grant select on public.forum_authors to anon, authenticated;
