@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "model": "two-bucket",
+  "formula": "EV per pack = dead × (1 − 1/odds) + chase × (1/odds). Box EV = pack EV × box packs. ETB EV = pack EV × ETB packs + optional promo dollars.",
+  "box": {
+    "packs": 36,
+    "label": "Booster box"
+  },
+  "etb": {
+    "label": "Elite Trainer Box",
+    "packsBySeries": {
+      "XY": 8,
+      "Sun & Moon": 8,
+      "Sword & Shield": 8,
+      "Scarlet & Violet": 9,
+      "Mega Evolution": 9
+    }
+  },
+  "exclude": {
+    "profiles": ["specialty"],
+    "nameIncludes": ["Shiny Vault", "Trainer Gallery", "Galarian Gallery", "Classic Collection"]
+  },
+  "overrides": {
+    "det1": {
+      "boxPacks": null,
+      "etbPacks": null,
+      "note": "Detective Pikachu is a special product. Type the pack count on the box you are pricing."
+    },
+    "sm115": {
+      "boxPacks": null,
+      "etbPacks": 10,
+      "note": "Hidden Fates had no English 36-pack booster box. Standard ETBs are modeled as 10 packs."
+    },
+    "swsh35": {
+      "boxPacks": null,
+      "etbPacks": 10,
+      "note": "Champion's Path had no English 36-pack booster box. Standard ETBs are modeled as 10 packs."
+    },
+    "swsh45": {
+      "boxPacks": null,
+      "etbPacks": 10,
+      "note": "Shining Fates had no English 36-pack booster box. Standard ETBs are modeled as 10 packs."
+    },
+    "cel25": {
+      "boxPacks": null,
+      "etbPacks": 10,
+      "note": "Celebrations had no English 36-pack booster box. ETBs are modeled as 10 packs — edit if your box differs."
+    },
+    "swsh12pt5": {
+      "boxPacks": null,
+      "etbPacks": 10,
+      "note": "Crown Zenith had no English 36-pack booster box. Standard ETBs are modeled as 10 packs (Pokémon Center ETB Plus is 12)."
+    },
+    "sv3pt5": {
+      "boxPacks": null,
+      "etbPacks": 9,
+      "note": "151 had no English booster box. Standard ETBs are 9 packs (Pokémon Center ETB is 11)."
+    },
+    "sv4pt5": {
+      "boxPacks": null,
+      "etbPacks": 9,
+      "note": "Paldean Fates had no English booster box. Standard ETBs are 9 packs (Pokémon Center ETB is 11)."
+    },
+    "sv6pt5": {
+      "boxPacks": null,
+      "etbPacks": 9,
+      "note": "Shrouded Fable had no English booster box. ETBs are modeled as 9 packs — edit if your box differs."
+    },
+    "me55": {
+      "boxPacks": null,
+      "etbPacks": 9,
+      "note": "30th Celebration is treated as a special set: no 36-pack box unless you type one. ETB uses the Mega Evolution size of 9."
+    }
+  },
+  "notes": [
+    "Pull rates are unpublished. Each set's dead value, chase odds, and chase value live in data/sets.json (evDeadUsd, evChaseOdds, evChaseUsd) and stay editable.",
+    "Box and ETB numbers are pack counts, not pull rates. English booster boxes are 36 packs unless an override says otherwise. ETB size follows the series map above.",
+    "Eras without an ETB entry (Base through Black & White) have no ETB row until you type a pack count.",
+    "Promo cards inside an ETB are not priced. Add a promo dollar amount on the calculator if you want them in ETB EV. Default is $0.",
+    "Sold prices are never invented. EV/cost uses a per-set cost you type, a board-wide cost, or an optional MSRP hint that is labeled as MSRP rather than market."
+  ]
+}

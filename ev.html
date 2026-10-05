@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; form-action 'self'; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.pokemontcg.io https://cdn.jsdelivr.net;" />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-<title>Account — PackEV</title>
-  <meta name="description" content="Your PackEV member profile." />
+  <title>Set EV board — PackEV</title>
+  <meta name="description" content="Compare Pokemon TCG sets by pack, booster box, and ETB expected value." />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="wrap">
+  <div class="wrap wrap-wide">
     <nav class="nav">
       <span class="brand">PackEV</span>
       <a href="index.html">Sets</a>
@@ -26,32 +26,19 @@
         <a href="login.html">Log in</a>
       </span>
     </nav>
-    <div class="card auth-card">
-      <span class="pill">PROFILE</span>
-      <h1>Your account</h1>
-      <p class="lead">Profile stub — display name only. Members can read/update their own row; nobody can write site files from the browser.</p>
-      <div id="auth-config-banner"></div>
-      <div id="account-panel">
-        <div class="stats" style="grid-template-columns:1fr">
-          <div class="stat">
-            <span class="sub">Signed in as</span>
-            <b id="acct-email">…</b>
-          </div>
-        </div>
-        <form id="profile-form" class="auth-form">
-          <label for="acct-name">Display name</label>
-          <input id="acct-name" name="display_name" type="text" maxlength="80" placeholder="Trainer name" />
-          <button type="submit">Save profile</button>
-        </form>
-        <p id="auth-form-msg" class="auth-msg" hidden></p>
-        <p class="tip"><a href="#" id="acct-signout">Log out</a> · <a href="AUTH.md">How member security works</a></p>
-      </div>
+    <div class="card">
+      <span class="pill">SEALED EV</span>
+      <h1>Set EV board</h1>
+      <p class="lead">Rank main sets by pack, box, and ETB expected value, then compare that EV with a cost you type. Open the <a href="rip.html">calculator</a> to change chase assumptions for one set.</p>
+      <div id="ev-board"></div>
     </div>
-    <footer>PackEV</footer>
+    <footer>PackEV · sealed EV uses stored chase weights, not invented sold prices</footer>
   </div>
   <script src="border.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/ev.js"></script>
+  <script src="js/ev-board.js"></script>
 </body>
 </html>

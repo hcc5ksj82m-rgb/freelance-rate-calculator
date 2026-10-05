@@ -157,37 +157,38 @@
       + ' · #' + esc(card.number || '?')
       + (card.rarity ? ' · ' + esc(card.rarity) : '');
 
-    var priceHtml = '';
+    var priceHtml = '<h2 class="detail-kicker">Market</h2>';
     if (p) {
-      priceHtml = '<div class="card-spot">' + fmtMoney(p.value, p.currency) + '</div>'
-        + '<div class="tip">' + esc(p.source)
+      priceHtml += '<div class="card-spot">' + fmtMoney(p.value, p.currency) + '</div>'
+        + '<div class="tip">Catalog market price'
+        + (p.source ? ' · ' + esc(p.source) : '')
         + (p.printType ? ' · ' + esc(p.printType) : '')
-        + ' · current market</div>';
+        + '. This is not an eBay sold price.</div>';
       var bits = [];
       if (p.low != null) bits.push('Low ' + fmtMoney(p.low, p.currency));
       if (p.mid != null) bits.push('Mid ' + fmtMoney(p.mid, p.currency));
       if (p.high != null) bits.push('High ' + fmtMoney(p.high, p.currency));
       if (bits.length) priceHtml += '<div class="tip card-price-range">' + bits.join(' · ') + '</div>';
     } else {
-      priceHtml = '<div class="card-spot">—</div><div class="tip">No market price in catalog yet</div>';
+      priceHtml += '<div class="card-spot">—</div><div class="tip">No market price in the catalog yet. Market figures are separate from eBay sold listings.</div>';
     }
     $('priceBlock').innerHTML = priceHtml;
 
     if (window.PackEVGraded) {
-      $('gradedMount').innerHTML = PackEVGraded.render(card, setName);
+      $('gradedMount').innerHTML = PackEVGraded.render(card, setName, { prominent: true });
     }
 
     var ebay = ebaySoldUrl(card.name, setName, card.number);
     var hints = soldHints(card);
-    var soldHtml = '<h2>Last sold</h2>'
-      + '<p class="tip">We do not store eBay sold comps yet. Open recent completed sales:</p>'
+    var soldHtml = '<h2>eBay sold</h2>'
+      + '<p class="tip">Completed eBay listings. PackEV does not store those sold prices, so this opens the search instead of drawing a number.</p>'
       + '<p><a class="btn sold-btn" href="' + esc(ebay) + '" target="_blank" rel="noopener">eBay sold search →</a></p>';
     if (hints.length) {
       soldHtml += '<ul class="sold-hints">' + hints.map(function (h) {
         return '<li><span class="tip">' + esc(h.label) + '</span> <strong>'
           + fmtMoney(h.value, h.currency) + '</strong></li>';
       }).join('') + '</ul>'
-        + '<p class="tip">Cardmarket averages are secondary hints (EUR), not eBay last sold.</p>';
+        + '<p class="tip">Cardmarket averages are EUR market hints, not eBay sold prices.</p>';
     }
     $('soldBlock').innerHTML = soldHtml;
 

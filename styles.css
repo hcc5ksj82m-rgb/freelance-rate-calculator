@@ -392,6 +392,70 @@ button.linkish{
   .chase-chip-meta .sub{max-width:7.5rem}
 }
 
+/* Sealed EV — calculator, board, home teaser */
+.wrap-wide{max-width:1120px}
+.detail-kicker{margin:.2rem 0 .25rem;font-size:1rem}
+.graded-panel{margin:.85rem 0;padding:.85rem;border-radius:14px;background:#fff;border:1px solid var(--line)}
+.graded-panel h2{margin:.1rem 0 .35rem;font-size:1rem}
+.graded-links{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.35rem}
+a.chip-link,button.chip-link{
+  display:inline-block;width:auto;margin:0;padding:.38rem .7rem;border-radius:999px;
+  background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-weight:750;font-size:.8rem;
+  text-decoration:none;
+}
+a.chip-link:hover{text-decoration:none;background:#dbeafe}
+.product-ev{
+  background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:.8rem .85rem;
+}
+.product-ev h3{margin:.1rem 0 .2rem;font-size:.95rem;color:#0f172a}
+.product-ev .stat{margin-top:.55rem;background:#fff}
+.sealed-compare{margin-top:1rem}
+.sealed-compare h2{margin-bottom:.25rem}
+.sealed-teaser{margin:1rem 0 .5rem;padding:.85rem;border:1px solid var(--line);border-radius:14px;background:#fff}
+.sealed-strip{margin:0 0 .9rem;padding:.8rem .85rem;border:1px solid #fcd34d;border-radius:14px;background:#fffbeb}
+.sealed-strip h2{margin:.1rem 0 .35rem;font-size:1rem}
+.sealed-metrics{display:flex;flex-wrap:wrap;gap:.45rem}
+.sealed-metrics span.metric{background:#fff;border:1px solid var(--line);border-radius:10px;padding:.4rem .6rem;min-width:6.5rem}
+.sealed-metrics b{display:block;font-size:1rem;color:#0f172a}
+.sealed-teaser .movers-head{display:flex;justify-content:space-between;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+.sealed-teaser .movers-head h2{margin:0}
+.table-scroll{overflow-x:auto;margin-top:.35rem}
+.ev-table{min-width:640px}
+.ev-table.compact{min-width:0}
+.ev-table th .sort-btn + .sort-btn{margin-left:.35rem;font-weight:700;color:#92400e}
+.ev-table td.num,.ev-table th.num{text-align:right}
+.ev-table td.num b{display:block;font-variant-numeric:tabular-nums}
+.ev-table td .tip{display:block;margin:0}
+.ev-rank{color:var(--muted);font-variant-numeric:tabular-nums}
+.muted-dash{color:#94a3b8}
+button.sort-btn{
+  display:inline;width:auto;margin:0;padding:0;border:0;background:none;box-shadow:none;
+  color:#b45309;font:inherit;font-size:.72rem;font-weight:800;letter-spacing:.02em;
+  text-transform:uppercase;cursor:pointer;text-align:inherit;
+}
+button.sort-btn:hover{filter:none;text-decoration:underline}
+button.sort-btn.active{text-decoration:underline}
+button.btn-quiet{
+  display:inline-block;width:auto;margin:.35rem .4rem .35rem 0;padding:.45rem .75rem;
+  border-radius:10px;background:#fff;color:#0f172a;border:1px solid var(--line);
+  font-weight:700;font-size:.82rem;cursor:pointer;box-shadow:none;
+}
+button.btn-quiet:hover{filter:none;border-color:#f59e0b}
+button.btn-quiet.on{background:#fff7ed;border-color:#fdba74}
+.cost-bar{margin-top:.2rem}
+input.cost-in{
+  width:5.4rem;padding:.35rem .4rem;font-size:.82rem;border-radius:8px;text-align:right;
+}
+input.cost-in.custom{border-color:#f59e0b;background:#fffbeb}
+.ev-toolbar{margin-top:.35rem}
+.ev-notes{margin-top:.9rem;font-size:.88rem}
+.ev-notes summary{cursor:pointer;font-weight:700;color:#0f172a}
+.ev-notes ul{margin:.4rem 0 0;padding-left:1.1rem}
+.cost-bar label{margin-top:.2rem}
+@media(max-width:720px){
+  .ev-table{min-width:680px}
+}
+
 /* Today's movers (home) */
 .movers{margin:1rem 0 .5rem;padding:.85rem;border:1px solid var(--line);border-radius:14px;background:#fffdf7}
 .movers-head h2{margin:0 0 .2rem;font-size:1.05rem;display:flex;align-items:center;gap:.45rem}
@@ -406,5 +470,7 @@ button.linkish{
 .mover-m strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#0f172a}
 .mover-m .tip{margin:0;font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mover-p{font-weight:800;color:#b45309}
-.mover-p .up,.mover-p .down{font-weight:700;margin-left:.25rem}
+.mover-delta{font-weight:800;font-size:.82rem}
+.movers-sort{display:flex;gap:.35rem;margin:.45rem 0 .15rem}
+.movers-caption{margin:.15rem 0 .55rem}
 @media (max-width:640px){.movers-grid{grid-template-columns:1fr}}
