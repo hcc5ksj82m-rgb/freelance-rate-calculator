@@ -354,6 +354,8 @@ button:disabled{opacity:.55;cursor:not-allowed;filter:none}
 .show-soon-pill{background:#dcfce7;color:#15803d}
 .shows-upcoming{display:flex;align-items:center;gap:.4rem;font-size:.9rem;white-space:nowrap;padding-bottom:.55rem;cursor:pointer}
 .shows-upcoming input{width:auto;margin:0}
+.show-cal{margin-top:.35rem}
+.show-cal button.linkish{color:#1d4ed8;font-weight:600}
 .show-meta{display:flex;flex-direction:column;gap:.2rem;font-size:.86rem;color:#334155}
 @media(min-width:700px){
   .show-meta{flex-direction:row;flex-wrap:wrap;gap:.75rem 1.25rem}

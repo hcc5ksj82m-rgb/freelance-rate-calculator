@@ -53,6 +53,15 @@
           <label for="show-q">Filter by city or event</label>
           <input id="show-q" type="search" placeholder="e.g. London, Melbourne, PokeKon…" autocomplete="off" />
         </div>
+        <div style="flex:1;min-width:150px">
+          <label for="show-when">When</label>
+          <select id="show-when">
+            <option value="">Any date</option>
+            <option value="30">Next 30 days</option>
+            <option value="month">This month</option>
+            <option value="next-month">Next month</option>
+          </select>
+        </div>
         <label class="shows-upcoming" for="show-upcoming">
           <input id="show-upcoming" type="checkbox" checked /> Upcoming only
         </label>
