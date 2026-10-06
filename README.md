@@ -1,6 +1,10 @@
 # PackEV
 
-Pokemon-only: every TCG set, live price charts, pack rip EV calculator.
+Pokemon-only: every TCG set, live price charts, pack / box / ETB EV.
+
+## Sealed EV
+
+Pack EV uses the two-bucket weights already stored on each set in `data/sets.json`: `EV = dead × (1 − 1/odds) + chase × (1/odds)`. Box and ETB EV scale that by the pack counts in `data/sealed-assumptions.json` (36-pack boxes; era ETB sizes; special sets called out). Promo cards inside an ETB are $0 unless you add a dollar amount. The [EV board](ev.html) ranks main sets and compares EV with a cost you type. MSRP hints are optional and labeled as MSRP. Sold prices are not invented.
 
 Live: https://hcc5ksj82m-rgb.github.io/freelance-rate-calculator/
 
@@ -10,7 +14,7 @@ Live: https://hcc5ksj82m-rgb.github.io/freelance-rate-calculator/
 - The page makes no API requests until a card name is searched.
 - **History chart:** click a search result (or a card on a set page) for a clean line chart. Data comes from `public.card_price_history` (anon read). Range chips that lack enough points are hidden; tip: “More history builds daily.”
 - **$0 history:** daily snapshots of `cards.market_price_usd`. One-time Cardmarket avg1/avg7/avg30 backfill (~1/7/30 days ago) only for cards **without** TCGPlayer prices (avoids mixing USD/EUR on one chart). No paid APIs. Daily routine: after catalog sync run `scripts/snapshot-prices.py` or `sync-pokemon-cards.py --snapshot-history` / `--snapshot-only`.
-- **Latest movers (home):** `public.card_daily_movers` view (security_invoker, anon SELECT) compares each LIVE-refreshed card's newest `live_api` price with its previous snapshot. The daily routine refreshes the ~150 most valuable catalog cards plus chase cards from the Pokemon TCG API (`source='live_api'`), then snapshots everything else as `catalog`. If the API drops a card's priced variant (e.g. reverse holo gone, only normal left), keep the previous price instead of logging a fake crash.
+- **Latest movers (home):** `public.card_daily_movers` view (security_invoker, anon SELECT) compares each LIVE-refreshed card's newest `live_api` price with its previous snapshot. The list shows both percent and dollar change from those two points, and can be sorted either way. The daily routine refreshes the ~150 most valuable catalog cards plus chase cards from the Pokemon TCG API (`source='live_api'`), then snapshots everything else as `catalog`. If the API drops a card's priced variant (e.g. reverse holo gone, only normal left), keep the previous price instead of logging a fake crash.
 
 
 ## Full catalog (Supabase)

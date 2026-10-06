@@ -15,7 +15,8 @@ with latest as (
 )
 select t.card_id, c.name, c.set_id, c.set_name, c.number, c.image_small,
        t.day, p.prev_day, p.prev_usd, t.now_usd,
-       round((t.now_usd - p.prev_usd) / nullif(p.prev_usd, 0) * 100, 2) as pct_change
+       round((t.now_usd - p.prev_usd) / nullif(p.prev_usd, 0) * 100, 2) as pct_change,
+       round(t.now_usd - p.prev_usd, 2) as usd_change
 from t join p on p.card_id = t.card_id join public.cards c on c.id = t.card_id
 where p.prev_usd > 0 and t.now_usd <> p.prev_usd;
 

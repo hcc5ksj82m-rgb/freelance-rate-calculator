@@ -87,21 +87,38 @@
       + '&amp;LH_Sold=1&amp;LH_Complete=1';
   }
 
-  function render(card, fallbackSetName) {
+  function soldLinks(name, setName, className) {
+    return ['PSA 10', 'PSA 9', 'CGC 10'].map(function (grade) {
+      var cls = className ? ' class="' + className + '"' : '';
+      var label = className ? grade + ' sold' : grade;
+      return '<a' + cls + ' href="' + soldUrl(name, setName, grade) + '" target="_blank" rel="noopener">' + label + '</a>';
+    }).join('');
+  }
+
+  function render(card, fallbackSetName, opts) {
+    opts = opts || {};
     var graded = card && card.graded ? card.graded : find(card || {});
     var name = card && card.name || '';
     var setName = card && (card.setName || (typeof card.set === 'string' ? card.set : card.set && card.set.name)) || fallbackSetName || '';
-    var body;
-    if (graded.length) {
-      body = graded.map(function (item) {
-        return '<span class="graded-item">' + esc(item.label) + ' ' + money(item.value) + '</span>';
-      }).join('');
-      return '<div class="graded-row"><span class="graded-label">Graded</span>' + body + '</div>';
+    var links = soldLinks(name, setName, opts.prominent ? 'chip-link' : '');
+    if (opts.prominent) {
+      var prices = graded.length
+        ? '<div class="graded-row"><span class="graded-label">Catalog grades</span>'
+          + graded.map(function (item) {
+            return '<span class="graded-item">' + esc(item.label) + ' ' + money(item.value) + '</span>';
+          }).join('') + '</div>'
+        : '<p class="tip">No graded dollar amounts in the catalog for this card.</p>';
+      return '<section class="graded-panel"><h2>Graded</h2>' + prices
+        + '<p class="tip">PSA and CGC links open eBay sold search. They are not filled-in prices.</p>'
+        + '<div class="graded-links">' + links + '</div></section>';
     }
-    body = ['PSA 10', 'PSA 9', 'CGC 10'].map(function (grade) {
-      return '<a href="' + soldUrl(name, setName, grade) + '" target="_blank" rel="noopener">' + grade + '</a>';
-    }).join('');
-    return '<div class="graded-row"><span class="graded-label">Graded · sold comps (not auto-filled $)</span>' + body + '</div>';
+    if (graded.length) {
+      return '<div class="graded-row"><span class="graded-label">Graded</span>'
+        + graded.map(function (item) {
+          return '<span class="graded-item">' + esc(item.label) + ' ' + money(item.value) + '</span>';
+        }).join('') + '</div>';
+    }
+    return '<div class="graded-row"><span class="graded-label">Graded sold</span>' + links + '</div>';
   }
 
   root.PackEVGraded = { find: find, render: render };

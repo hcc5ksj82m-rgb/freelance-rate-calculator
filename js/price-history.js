@@ -15,6 +15,7 @@
   var TIP_BUILD = 'More history builds daily';
   var TIP_FLAT = 'History is just starting — snapshots are still flat for this card';
   var TIP_CM = 'Short anchors from Cardmarket avgs (EUR shape scaled to USD spot)';
+  var TIP_THIN = 'Thin history — only real snapshot points, no filled gaps';
 
   function cfg() {
     return root.PACK_EV_SUPABASE || {};
@@ -118,11 +119,20 @@
     return points.filter(function (p) { return p.date >= cut; });
   }
 
-  /** Ranges that have enough points to draw a line (≥2). */
+  /**
+   * Chips that can draw a line (≥2 points). Wider chips that contain the
+   * same points as a tighter one are hidden — a 10-day series is not a 5Y chart.
+   */
   function availableRanges(points) {
-    return RANGES.filter(function (r) {
-      return filterByRange(points, r.id).length >= 2;
+    var kept = [];
+    var seen = {};
+    RANGES.forEach(function (r) {
+      var n = filterByRange(points, r.id).length;
+      if (n < 2 || seen[n]) return;
+      seen[n] = true;
+      kept.push(r);
     });
+    return kept;
   }
 
   /**
@@ -265,9 +275,10 @@
       var avail = availableRanges(state.points);
       rebuildChips(avail);
 
+      rangesEl.hidden = !avail.length;
       if (!avail.length) {
         if (state.points.length === 1) {
-          paintEmpty('Only one price point so far. ' + TIP_BUILD + '.');
+          paintEmpty('Only one price point so far. ' + TIP_THIN + '. ' + TIP_BUILD + '.');
         } else {
           paintEmpty(TIP_BUILD + '.');
         }
@@ -315,6 +326,7 @@
       var noteBits = [seriesPts.length + ' points'];
       if (spanDays) noteBits.push('~' + spanDays + 'd span');
       noteBits.push('latest ' + fmtLongDay(seriesPts[seriesPts.length - 1].date));
+      if (seriesPts.length < 8) noteBits.push(TIP_THIN);
       if (flat) noteBits.push(TIP_FLAT);
       if (hasCardmarketAnchors(seriesPts)) noteBits.push(TIP_CM);
       noteBits.push(TIP_BUILD);

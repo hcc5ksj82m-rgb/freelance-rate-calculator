@@ -16,6 +16,7 @@
       <a href="index.html">Sets</a>
       <a href="prices.html">Prices</a>
       <a href="rip.html">Pack EV</a>
+      <a href="ev.html">EV board</a>
       <a href="shows.html">Shows</a>
       <a href="forum.html">Forum</a>
       <a href="about.html">About</a>
@@ -29,6 +30,7 @@
       <span class="pill">LIVE FEED</span>
       <h1 id="title">Loading set…</h1>
       <p class="lead" id="lead"></p>
+      <div id="sealedEv" class="sealed-strip" hidden></div>
       <div class="warn">
         Card images + market prices load from our catalog (TCGPlayer / Cardmarket snapshots when present).
         Pull odds are <strong>estimated by rarity</strong> (not official sealed odds — those are unpublished for most sets).
@@ -52,11 +54,13 @@
       </div>
       <p class="loading" id="status">Loading cards…</p>
       <div class="card-grid" id="grid"></div>
-      <p class="tip" style="margin-top:1rem"><a id="ripLink" href="rip.html">Open pack EV for this set →</a></p>
+      <p class="tip" style="margin-top:1rem"><a id="ripLink" href="rip.html">Open pack, box, and ETB EV for this set →</a>
+        · <a href="ev.html">Set EV board →</a></p>
     </div>
     <footer>PackEV · Live Pokemon TCG data</footer>
   </div>
   <script src="js/graded.js"></script>
+  <script src="js/ev.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/cards-fetch.js"></script>
@@ -142,6 +146,24 @@
       throw lastErr;
     }
 
+    function paintSealed(local, assumptions) {
+      const el = $('sealedEv');
+      if (!el || !window.PackEVMath || !local) return;
+      const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      const s = PackEVMath.summarize(local, assumptions || PackEVMath.DEFAULT_ASSUMPTIONS);
+      const cell = (label, value, packs) => '<span class="metric"><span class="tip">' + esc(label)
+        + (packs ? ' · ' + esc(packs) + ' packs' : '') + '</span><b>' + esc(PackEVMath.money(value)) + '</b></span>';
+      el.innerHTML = '<h2>Sealed EV</h2><div class="sealed-metrics">'
+        + cell('Pack', s.evPack, null)
+        + cell('Box', s.evBox, s.boxPacks)
+        + cell('ETB', s.evEtb, s.etbPacks)
+        + '</div>'
+        + (s.note ? '<p class="tip">' + esc(s.note) + '</p>' : '')
+        + '<p class="tip">Same chase model as the calculator. <a href="rip.html?set=' + encodeURIComponent(local.id)
+        + '">Compare against your cost →</a> · <a href="ev.html">EV board →</a></p>';
+      el.hidden = false;
+    }
+
     function openCardPage(cardId) {
       if (!cardId) return;
       location.href = 'card.html?id=' + encodeURIComponent(cardId);
@@ -195,7 +217,10 @@
         // Prefer local sets.json (reliable on Pages); live API is optional and often 5xx.
         let metaLoaded = false;
         try {
-          const localSets = await fetch('data/sets.json').then(r => r.json());
+          const [localSets, assumptions] = await Promise.all([
+            fetch('data/sets.json').then(r => r.json()),
+            fetch('data/sealed-assumptions.json').then(r => r.ok ? r.json() : null).catch(() => null)
+          ]);
           const local = Array.isArray(localSets) ? localSets.find(x => x.id === setId) : null;
           if (local && local.name) {
             $('title').textContent = local.name;
@@ -204,6 +229,7 @@
             $('lead').textContent = (local.series || '')
               + (local.releaseDate ? ' · released ' + local.releaseDate : '')
               + (local.cardCount != null ? ' · ' + local.cardCount + ' cards' : '');
+            paintSealed(local, assumptions);
             metaLoaded = true;
           }
         } catch (_) { /* ignore */ }
