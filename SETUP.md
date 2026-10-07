@@ -31,9 +31,11 @@ Reload `join.html` / `login.html`. Submit buttons unlock when URL + anon key are
 
 ## Security reminder
 - Members **never** get GitHub access.
-- Members can only read/update **their own** `profiles` row (RLS).
+- Members can only read/update **their own** `profiles` row (RLS). Forum display names are public via `forum_authors` after you run `supabase/forum_schema.sql`.
 - Static site files are not writable from the browser. See `AUTH.md`.
 
 ## Price history
 
-Apply `supabase/card_price_history.sql` (already applied on Packev). Grow history with `python3 scripts/snapshot-prices.py` using the service role key (never commit secrets). Charts on Prices / Set pages read history with the anon key.
+Apply `supabase/card_price_history.sql` (already applied on Packev; re-run it to add `card_sold_comps`). Grow history with `python3 scripts/snapshot-prices.py` using the service role key (never commit secrets). Charts read history with the anon key. The daily price shown on a card is the average of the last 10 recorded prices; the monthly price averages those daily figures; the 20-year range does not invent missing years. Insert real completed sales into `card_sold_comps` (service role) and the chart uses those instead of snapshots.
+
+Re-run `supabase/forum_schema.sql` after pulling forum updates so display names, reply counts, and delete-own policies exist.

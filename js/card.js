@@ -179,20 +179,53 @@
 
     var ebay = ebaySoldUrl(card.name, setName, card.number);
     var hints = soldHints(card);
-    var soldHtml = '<h2>Last sold</h2>'
-      + '<p class="tip">We do not store eBay sold comps yet. Open recent completed sales:</p>'
-      + '<p><a class="btn sold-btn" href="' + esc(ebay) + '" target="_blank" rel="noopener">eBay sold search →</a></p>';
+    var soldHtml = '<h2>Sold averages</h2>'
+      + '<div class="sold-stats">'
+      + '<div class="sold-stat"><span>Daily · last 10</span><b id="soldDaily">…</b><em id="soldDailyN"></em></div>'
+      + '<div class="sold-stat"><span>Monthly average</span><b id="soldMonthly">…</b></div>'
+      + '</div>'
+      + '<p class="tip" id="soldNote">Daily price averages the last 10 recorded sales. Monthly price averages those daily figures. The chart’s 20-year range uses the same averages for every stored month.</p>'
+      + '<p><a class="btn sold-btn" href="' + esc(ebay) + '" target="_blank" rel="noopener">eBay completed listings →</a></p>';
     if (hints.length) {
       soldHtml += '<ul class="sold-hints">' + hints.map(function (h) {
         return '<li><span class="tip">' + esc(h.label) + '</span> <strong>'
           + fmtMoney(h.value, h.currency) + '</strong></li>';
       }).join('') + '</ul>'
-        + '<p class="tip">Cardmarket averages are secondary hints (EUR), not eBay last sold.</p>';
+        + '<p class="tip">Cardmarket averages are a separate EUR hint, not the last-10 sold price.</p>';
     }
     $('soldBlock').innerHTML = soldHtml;
 
     if (window.PackEVPriceHistory) {
-      PackEVPriceHistory.mount($('historyMount'), normalizeForHistory(card, p), window.Chart);
+      PackEVPriceHistory.mount($('historyMount'), normalizeForHistory(card, p), window.Chart, {
+        onSummary: function (summary) {
+          var dailyEl = $('soldDaily');
+          var monthEl = $('soldMonthly');
+          var noteEl = $('soldNote');
+          if (!dailyEl || !monthEl) return;
+          var sampleEl = $('soldDailyN');
+          if (!summary || summary.error || !summary.latestDaily) {
+            dailyEl.textContent = '—';
+            monthEl.textContent = '—';
+            if (sampleEl) sampleEl.textContent = '';
+            if (noteEl && summary && summary.error) noteEl.textContent = 'Price history could not be loaded.';
+            else if (noteEl) noteEl.textContent = 'No recorded sales yet. The 20-year chart fills in only as real prices are stored.';
+            return;
+          }
+          var samples = summary.latestDaily.sampleSize || 0;
+          dailyEl.textContent = fmtMoney(summary.latestDaily.value, 'USD');
+          if (sampleEl) {
+            sampleEl.textContent = samples < 10 ? samples + ' of 10 recorded' : 'last 10 sales';
+          }
+          monthEl.textContent = summary.latestMonth
+            ? fmtMoney(summary.latestMonth.value, 'USD')
+            : '—';
+          if (noteEl) {
+            noteEl.textContent = summary.kind === 'sold'
+              ? 'Daily price is the average of the last 10 completed sales. Monthly price is the average of those daily prices. The 20-year chart uses the same averages and leaves years with no sales empty.'
+              : 'Daily price is the average of the last 10 recorded market prices — the same method as an eBay last-10 sold comp. Monthly price averages those daily figures. The 20-year chart draws only stored months.';
+          }
+        }
+      });
     }
   }
 

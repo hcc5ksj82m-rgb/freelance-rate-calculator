@@ -162,6 +162,31 @@
       + esc(src.slice(i + q.length));
   }
 
+  function chartValue(card) {
+    if (card.avgDaily != null && card.currency !== 'EUR') return Number(card.avgDaily);
+    return card.price != null ? Number(card.price) : null;
+  }
+
+  async function enrichAverages(cards, gen, query) {
+    if (!window.PackEVPriceHistory || !PackEVPriceHistory.fetchLatestAverages) return;
+    var ids = cards.map(function (c) { return c.id; }).filter(Boolean);
+    if (!ids.length) return;
+    try {
+      var map = await PackEVPriceHistory.fetchLatestAverages(ids);
+      if (gen !== searchGen) return;
+      var changed = false;
+      cards.forEach(function (c) {
+        var row = map[c.id];
+        if (!row || row.daily == null) return;
+        c.avgDaily = row.daily;
+        c.avgMonthly = row.monthly;
+        c.avgSamples = row.samples;
+        changed = true;
+      });
+      if (changed) paintSearchResults(cards, query);
+    } catch (_) { /* spot prices stay on screen */ }
+  }
+
   function paintSearchResults(cards, query) {
     var status = els.searchStatus;
     var grid = els.searchGrid;
@@ -181,12 +206,22 @@
       + ' · ' + liveN + ' with prices'
       + ' · click a card for details + history';
 
-    var max = Math.max.apply(null, cards.map(function (c) { return Number(c.price) || 0 }).concat([1]));
-    chart.innerHTML = '<p class="chart-caption tip">Market price of these results (taller = higher). Exact name matches are listed first.</p><div class="chart-bars">'
+    var anyAvg = cards.some(function (c) { return c.avgDaily != null && c.currency !== 'EUR'; });
+    var shownVals = cards.slice(0, 12).map(chartValue).filter(function (v) { return v > 0; }).sort(function (a, b) { return a - b; });
+    var mid = shownVals.length ? shownVals[Math.floor(shownVals.length / 2)] : 1;
+    var max = Math.max.apply(null, shownVals.concat([1]));
+    var spreadNote = max > mid * 8 ? ' One result is much higher, so the other bars look short.' : '';
+    chart.innerHTML = '<p class="chart-caption tip">'
+      + (anyAvg
+        ? 'Bar height is the daily price: the average of the last 10 recorded prices. Exact name matches are listed first.'
+        : 'Market price of these results (taller = higher). Last-10 averages appear when history is available. Exact name matches are listed first.')
+      + spreadNote
+      + '</p><div class="chart-bars">'
       + cards.slice(0, 12).map(function (c) {
-      var h = Math.max(8, Math.round(((Number(c.price) || 0) / max) * 108));
+      var shown = chartValue(c);
+      var h = Math.max(8, Math.round(((Number(shown) || 0) / max) * 108));
       var label = (c.name || '').split(' ').slice(0, 2).join(' ');
-      var val = c.price != null ? fmtMoney(c.price, c.currency) : '—';
+      var val = shown != null ? fmtMoney(shown, c.currency === 'EUR' ? 'EUR' : 'USD') : '—';
       return '<div class="bar-wrap" title="' + esc(c.name) + ' ' + esc(val) + '">'
         + '<div class="bar-val">' + esc(val) + '</div>'
         + '<div class="bar" style="height:' + h + 'px"></div>'
@@ -203,6 +238,13 @@
       var setLink = c.setId
         ? '<a href="set.html?id=' + encodeURIComponent(c.setId) + '">' + esc(c.set || c.setId) + '</a>'
         : esc(c.set || '');
+      var avgLine = '';
+      if (c.avgDaily != null) {
+        avgLine = '<div class="tip">Last 10 avg ' + fmtMoney(c.avgDaily, 'USD')
+          + (c.avgSamples < 10 ? ' (' + c.avgSamples + '/10)' : '')
+          + (c.avgMonthly != null ? ' · month ' + fmtMoney(c.avgMonthly, 'USD') : '')
+          + '</div>';
+      }
       return '<article class="price-card" tabindex="0" role="button" data-id="' + esc(c.id) + '" aria-label="Open card page for ' + esc(c.name) + '">'
         + img
         + '<div class="m">'
@@ -210,6 +252,7 @@
         + '<div class="tip">#' + esc(c.number || '?') + ' · ' + esc(c.rarity || '—') + '</div>'
         + '<div class="tip set-of">' + setLink + '</div>'
         + '<div class="price">' + (c.price != null ? fmtMoney(c.price, c.currency) : '—') + ' ' + badge + '</div>'
+        + avgLine
         + sparkBars(c)
         + window.PackEVGraded.render(c)
         + '<div class="tip">' + esc(c.source || '') + (c.printType ? ' · ' + esc(c.printType) : '') + '</div>'
@@ -272,6 +315,7 @@
           return (Number(b.price) || 0) - (Number(a.price) || 0);
         });
         paintSearchResults(cards, raw);
+        enrichAverages(cards, gen, raw);
       } catch (e) {
         if (gen !== searchGen) return;
         els.searchStatus.classList.add('expand-error');

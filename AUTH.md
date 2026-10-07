@@ -7,7 +7,7 @@
 ## What members cannot do
 - **No GitHub access** — joining PackEV never grants repo, deploy, or org permissions.
 - **No write access to site files** — HTML/CSS/JS are static (GitHub Pages / Netlify). Auth tokens cannot edit the repo or uploaded assets.
-- **No other users’ profiles** — Row Level Security (RLS) on `profiles` requires `auth.uid() = id` for SELECT / INSERT / UPDATE.
+- **No other users’ profile rows** — Row Level Security (RLS) on `profiles` requires `auth.uid() = id` for SELECT / INSERT / UPDATE. The forum may read `forum_authors`, which exposes `id` and `display_name` only.
 - **No service_role key in the browser** — only the anon key lives in `js/supabase-config.js`.
 
 ## How it works
