@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-07",
+  "lastUpdated": "2026-10-08",
   "note": "Curated static listing of real Pokemon / TCG collector shows in English-speaking countries. Dates and venues change — always confirm on the organizer link. Not affiliated with The Pokemon Company. No fabricated DEMO events.",
   "countries": [
     {
@@ -157,6 +157,14 @@
               "url": "https://collectaconusa.com/houston2/",
               "type": "convention",
               "notes": "900+ vendor tables listed by the organizer, including Pokemon."
+            },
+            {
+              "name": "Trading Card Con Houston",
+              "dates": "2026-12-18 – 2026-12-20",
+              "venue": "Houston, TX — venue per organizer",
+              "url": "https://tradingcardcon.com/",
+              "type": "convention",
+              "notes": "Listed on the organizer's schedule; check the site for venue and tickets."
             }
           ]
         },
@@ -221,6 +229,14 @@
               "url": "https://collectaconusa.com/",
               "type": "convention",
               "notes": "NYC-metro Collect-A-Con stop (1,000+ dealer tables listed by the organizer)."
+            },
+            {
+              "name": "Poke City Card Show — Long Island City",
+              "dates": "2026-11-01",
+              "venue": "23-25 Newtown Ave, Long Island City (Queens), NY",
+              "url": "https://tcgshowsnearme.com/events/poke-city-card-show-long-island-city-2026-11-01",
+              "type": "show",
+              "notes": "9am–4pm, free entry, 40+ vendors (Pokemon plus comics, toys, Magic). Confirm with the organizer before travelling."
             }
           ]
         },
@@ -249,6 +265,20 @@
               "url": "https://championships.pokemon.com/en-us/events/regionals/2027/milwaukee",
               "type": "official",
               "notes": "Official Play! Pokemon Regional (TCG, VGC, GO) — about 90 minutes from Chicago."
+            }
+          ]
+        },
+        {
+          "name": "Phoenix, AZ",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Trading Card Con Glendale",
+              "dates": "2026-10-30 – 2026-11-01",
+              "venue": "Renaissance Phoenix Glendale Hotel & Conference Center, Glendale, AZ",
+              "url": "https://tradingcardcon.com/",
+              "type": "convention",
+              "notes": "Multi-day Pokemon, sports and TCG con (200+ dealers per organizer). Dates from the organizer site."
             }
           ]
         }
@@ -651,6 +681,14 @@
               "url": "https://championships.pokemon.com/en-us/events/regionals/2027/melbourne",
               "type": "official",
               "notes": "Official Oceania Regional (run by ESL Australia)."
+            },
+            {
+              "name": "TreasureCon Melbourne",
+              "dates": "2027-05-01 – 2027-05-02",
+              "venue": "Melbourne — venue to be announced",
+              "url": "https://www.treasurecon.com.au/",
+              "type": "convention",
+              "notes": "Announced by the organizer (dates confirmed, venue/tickets not yet released). Confirm before travelling."
             }
           ]
         },
@@ -703,6 +741,66 @@
               "url": "https://cardatlas.app/blog/shows/international/",
               "type": "show",
               "notes": "One-day Brisbane trading-card show."
+            },
+            {
+              "name": "Hunters Card Show — October",
+              "dates": "2026-10-17",
+              "venue": "Sleeman Sports Complex (Velodrome), Old Cleveland Rd & Tilley Rd, Chandler QLD (Carpark P2)",
+              "url": "https://hunterscardshow.com.au/",
+              "type": "show",
+              "notes": "9am–4pm, 50+ vendors (Pokemon, One Piece, sports, Magic and more). $10 early bird online / $15 door; kids 12 & under free. Dates from the organizer site."
+            },
+            {
+              "name": "Hunters Card Show — November",
+              "dates": "2026-11-14",
+              "venue": "Sleeman Sports Complex (Velodrome), Old Cleveland Rd & Tilley Rd, Chandler QLD (Carpark P2)",
+              "url": "https://hunterscardshow.com.au/",
+              "type": "show",
+              "notes": "9am–4pm, 50+ vendors (Pokemon, One Piece, sports, Magic and more). $10 early bird online / $15 door; kids 12 & under free. Dates from the organizer site."
+            },
+            {
+              "name": "Hunters Card Show — December",
+              "dates": "2026-12-05",
+              "venue": "Sleeman Sports Complex (Velodrome), Old Cleveland Rd & Tilley Rd, Chandler QLD (Carpark P2)",
+              "url": "https://hunterscardshow.com.au/",
+              "type": "show",
+              "notes": "9am–4pm, 50+ vendors (Pokemon, One Piece, sports, Magic and more). $10 early bird online / $15 door; kids 12 & under free. Dates from the organizer site."
+            },
+            {
+              "name": "Brisbane Card Show 2026",
+              "dates": "2026-11-28 – 2026-11-29",
+              "venue": "Distillery Road Market, 124 Distillery Rd, Eagleby QLD",
+              "url": "https://brisbanecardshow.com.au/",
+              "type": "convention",
+              "notes": "Sat & Sun 10am–4pm (Sun kids early entry 9am). Pokemon, Yu-Gi-Oh!, Magic, sports cards; on-site grading and trade zone. $15 GA, kids 12 & under free."
+            }
+          ]
+        },
+        {
+          "name": "Perth, WA",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "TreasureCon Perth 2026",
+              "dates": "2026-12-05 – 2026-12-06",
+              "venue": "Perth Convention & Exhibition Centre, 21 Mounts Bay Rd, Perth WA",
+              "url": "https://www.treasurecon.com.au/",
+              "type": "convention",
+              "notes": "Perth's biggest TCG & collectibles con (100+ vendors; 3,600 attendees in 2025). Pokemon creators Beard Dad and Coop's Collection appearing. Tickets on sale."
+            }
+          ]
+        },
+        {
+          "name": "Adelaide, SA",
+          "role": "major show city",
+          "events": [
+            {
+              "name": "Adelaide Pokemon Card Show (APCS) 2027",
+              "dates": "2027-01-16",
+              "venue": "Parafield Gardens Recreation Centre, cnr Kings & Martins Rds, Parafield Gardens SA",
+              "url": "https://www.trybooking.com/DOZJL",
+              "type": "show",
+              "notes": "Pokemon-only show, 100+ vendor tables. VIP early entry 12–1pm ($17), GA 1–4pm ($10). Previous four shows sold out — prebook on TryBooking."
             }
           ]
         }
@@ -763,6 +861,14 @@
               "url": "https://championships.pokemon.com/en-us/events/regionals/2027/auckland",
               "type": "official",
               "notes": "Official Play! Pokemon Special Championship in NZ."
+            },
+            {
+              "name": "HobbyCon Auckland — December",
+              "dates": "2026-12-05",
+              "venue": "Auckland Netball Centre, 7 Allison Ferguson Dr, St Johns, Auckland",
+              "url": "https://events.humanitix.com/hobbycon-auckland-december-5th-2026",
+              "type": "convention",
+              "notes": "10am–5pm NZDT (early access 9am). 200+ vendor tables for cards and hobbies. From NZ$15 online, NZ$20 door; under-12s free."
             }
           ]
         }

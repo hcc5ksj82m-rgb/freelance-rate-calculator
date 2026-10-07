@@ -114,6 +114,37 @@
     };
   }
 
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function fmtShortDay(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+    if (!m) return String(iso || '');
+    return Number(m[3]) + ' ' + MONTHS[Number(m[2]) - 1];
+  }
+
+  function paintPriceChange(changes) {
+    var el = $('priceChange');
+    if (!el) return;
+    if (!changes || !changes.length) {
+      el.hidden = true;
+      el.innerHTML = '';
+      return;
+    }
+    el.hidden = false;
+    el.innerHTML = '<span class="tip">Price change</span>' + changes.map(function (c) {
+      var body;
+      if (c.flat) {
+        body = '<span class="flat">Flat since ' + fmtShortDay(c.day) + '</span>';
+      } else {
+        var pct = Number(c.pct);
+        var cls = pct > 0 ? 'up' : (pct < 0 ? 'down' : 'flat');
+        var sign = pct > 0 ? '+' : '';
+        body = '<span class="' + cls + '">' + sign + pct.toFixed(1) + '% since ' + fmtShortDay(c.day) + '</span>';
+      }
+      return '<span class="price-chip"><span class="badge muted">' + esc(c.label) + '</span>' + body + '</span>';
+    }).join('');
+  }
+
   function setBackLink(setId) {
     var a = $('backLink');
     if (!a) return;
@@ -198,6 +229,7 @@
     if (window.PackEVPriceHistory) {
       PackEVPriceHistory.mount($('historyMount'), normalizeForHistory(card, p), window.Chart, {
         onSummary: function (summary) {
+          paintPriceChange(summary && summary.priceChanges);
           var dailyEl = $('soldDaily');
           var monthEl = $('soldMonthly');
           var noteEl = $('soldNote');

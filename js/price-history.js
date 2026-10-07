@@ -229,11 +229,75 @@
     }
   }
 
+  function shiftDay(iso, days) {
+    var d = new Date(String(iso).slice(0, 10) + 'T12:00:00Z');
+    if (isNaN(d.getTime())) return '';
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().slice(0, 10);
+  }
+
+  /* 1D / 7D / 30D from this card's own TCGPlayer-basis snapshots.
+     1D = the previous snapshot. 7D / 30D = earliest snapshot inside the window.
+     30D is dropped when it lands on the same day as 7D. */
+  function periodChanges(points) {
+    var byDay = Object.create(null);
+    (points || []).forEach(function (p) {
+      if (!p) return;
+      var source = p.source || '';
+      if (source !== 'live_api' && source !== 'catalog') return;
+      var day = String(p.date || p.day || '').slice(0, 10);
+      var value = Number(p.value != null ? p.value : p.market_price_usd);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !(value > 0)) return;
+      var prev = byDay[day];
+      if (!prev || (source === 'live_api' && prev.source !== 'live_api')) {
+        byDay[day] = { day: day, value: value, source: source };
+      }
+    });
+    var days = Object.keys(byDay).sort();
+    if (days.length < 2) return [];
+    var latest = byDay[days[days.length - 1]];
+    var onlyCatalog = days.every(function (d) { return byDay[d].source === 'catalog'; });
+
+    function earliestWithin(span) {
+      var cut = shiftDay(latest.day, -span);
+      for (var i = 0; i < days.length; i++) {
+        if (days[i] >= cut && days[i] < latest.day) return byDay[days[i]];
+      }
+      return null;
+    }
+
+    function chip(id, label, base) {
+      if (!base) return null;
+      var pct = Math.round(((latest.value - base.value) / base.value) * 10000) / 100;
+      return {
+        id: id,
+        label: label,
+        pct: pct,
+        day: base.day,
+        flat: onlyCatalog && pct === 0
+      };
+    }
+
+    var c1 = chip('1d', '1D', byDay[days[days.length - 2]]);
+    var c7 = chip('7d', '7D', earliestWithin(7));
+    var c30 = chip('30d', '30D', earliestWithin(30));
+    if (c30 && c7 && c30.day === c7.day) c30 = null;
+    return [c1, c7, c30].filter(Boolean);
+  }
+
   async function fetchSeries(cardId) {
-    var sold = await fetchSoldComps(cardId);
-    if (sold.length) return { points: sold, kind: 'sold' };
-    var snaps = await fetchHistory(cardId);
-    return { points: snaps, kind: 'snapshot' };
+    if (!cardId) return { points: [], kind: 'snapshot', basis: [] };
+    var sold = [];
+    var snaps = [];
+    var soldErr = null;
+    var snapErr = null;
+    await Promise.all([
+      fetchSoldComps(cardId).then(function (rows) { sold = rows || []; }, function (err) { soldErr = err; }),
+      fetchHistory(cardId).then(function (rows) { snaps = rows || []; }, function (err) { snapErr = err; })
+    ]);
+    if (sold.length) return { points: sold, kind: 'sold', basis: snaps };
+    if (!snaps.length && (snapErr || soldErr)) throw (snapErr || soldErr);
+    return { points: snaps, kind: 'snapshot', basis: snaps };
   }
 
   function groupRows(rows) {
@@ -370,6 +434,7 @@
       range: '1M',
       grain: null,
       raw: [],
+      basis: [],
       daily: [],
       monthly: [],
       kind: 'snapshot',
@@ -685,7 +750,8 @@
         latestDaily: latestDaily,
         latestMonth: latestMonth,
         dailyCount: state.daily.length,
-        monthlyCount: state.monthly.length
+        monthlyCount: state.monthly.length,
+        priceChanges: periodChanges(state.basis || [])
       });
     }
 
@@ -694,6 +760,7 @@
       state.loading = false;
       state.raw = series.points || [];
       state.kind = series.kind || 'snapshot';
+      state.basis = series.basis || (state.kind === 'snapshot' ? state.raw : []);
       var soldApi = Sold();
       if (soldApi) {
         var summary = averaged(state.raw);
@@ -732,6 +799,7 @@
     RANGES: RANGES,
     fetchHistory: fetchHistory,
     fetchSeries: fetchSeries,
+    periodChanges: periodChanges,
     fetchLatestAverages: fetchLatestAverages,
     availableRanges: availableRanges,
     filterByRange: filterByRange,
