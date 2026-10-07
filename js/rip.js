@@ -189,7 +189,14 @@
     wrap.appendChild(head);
     var cardsRow = document.createElement('div');
     cardsRow.className = 'rip-row';
-    pull.cards.forEach(function (card) {
+    var ordered = pull.cards.slice().sort(function (a, b) {
+      function rank(slot) {
+        if (slot === 'Common' || slot === 'Uncommon' || slot === 'Reverse') return 1;
+        return 0;
+      }
+      return rank(a.slot) - rank(b.slot);
+    });
+    ordered.forEach(function (card) {
       var fig = document.createElement('a');
       var hit = card.slot !== 'Common' && card.slot !== 'Uncommon' && card.slot !== 'Reverse';
       fig.className = hit ? 'rip-card rip-hit' : 'rip-card';
