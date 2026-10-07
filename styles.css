@@ -440,6 +440,53 @@ button.linkish{
   .chase-chip-meta .sub{max-width:7.5rem}
 }
 
+.rip-panel.result{display:block}
+.rip-panel .stats{grid-template-columns:1fr 1fr}
+.rip-panel .stat b.up{color:#16a34a}
+.rip-panel .stat b.down{color:#dc2626}
+.rip-breakdown{list-style:none;margin:.85rem 0 0;padding:0}
+.rip-breakdown li{
+  display:grid;grid-template-columns:minmax(7.5rem,1.1fr) minmax(0,2fr) auto;
+  gap:.15rem .75rem;align-items:baseline;padding:.45rem 0;border-bottom:1px solid var(--line)
+}
+.rip-breakdown li b{color:#b45309;font-variant-numeric:tabular-nums}
+.rip-breakdown .tip{margin:0}
+.rip-actions{display:flex;gap:.5rem;flex-wrap:wrap}
+.rip-actions button{width:auto;flex:1 1 8rem;margin-top:.7rem}
+.rip-actions .rip-clear{
+  background:#fff;color:#334155;border:1px solid var(--line);box-shadow:none
+}
+.rip-pack{
+  margin:.75rem 0 0;padding:.65rem .7rem .55rem;border:1px solid var(--line);
+  border-radius:14px;background:#fff;animation:rip-in .28s ease
+}
+.rip-pack-head{font-weight:800;font-size:.9rem;margin-bottom:.45rem}
+.rip-row{display:flex;gap:.45rem;overflow-x:auto;padding-bottom:.25rem;scroll-snap-type:x proximity}
+.rip-card{
+  flex:0 0 78px;width:78px;text-decoration:none;color:inherit;scroll-snap-align:start
+}
+.rip-card img,.rip-ph{
+  width:78px;height:110px;aspect-ratio:63/88;object-fit:cover;border-radius:8px;
+  background:#f1f5f9;display:block
+}
+.rip-card.rip-hit img,.rip-card.rip-hit .rip-ph{box-shadow:0 0 0 2px #f59e0b}
+.rip-cap{display:flex;flex-direction:column;gap:.05rem;margin-top:.25rem;font-size:.62rem;line-height:1.2;color:var(--muted)}
+.rip-cap b{color:#b45309;font-size:.72rem}
+.rip-name,.rip-cap span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rip-whatif{margin-top:1rem}
+.rip-whatif summary{cursor:pointer;font-weight:700;color:#b45309}
+@keyframes rip-in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){
+  .rip-pack{animation:none}
+}
+@media(min-width:700px){
+  .rip-panel .stats{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:600px){
+  .rip-breakdown li{grid-template-columns:1fr auto}
+  .rip-breakdown .tip{grid-column:1 / -1}
+}
+
 /* Today's movers (home) */
 .movers{margin:1rem 0 .5rem;padding:.85rem;border:1px solid var(--line);border-radius:14px;background:#fffdf7}
 .movers-head h2{margin:0 0 .2rem;font-size:1.05rem;display:flex;align-items:center;gap:.45rem}
