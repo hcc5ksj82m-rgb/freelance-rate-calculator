@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; form-action 'self'; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.pokemontcg.io https://cdn.jsdelivr.net;" />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-<title>Pack rip EV calculator — PackEV</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23f59e0b'/%3E%3C/svg%3E" />
+  <title>Cost of ripping — PackEV</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -24,63 +25,20 @@
         <a href="login.html">Log in</a>
       </span>
     </nav>
-    <div class="card">
-      <span class="pill">EV TOOL</span>
-      <h1>Cost of ripping packs</h1>
-      <p class="lead">Use <strong>eBay last-sold / current market pack cost</strong> — not the old release price. Dead-pack / chase defaults auto-fill by set era (you can override). Results update as you type.</p>
-      <div class="warn">Educational model. Official pull rates are unpublished. Check the eBay sold link before you enter pack cost. EV defaults are era estimates, not guarantees.</div>
-      <div class="grid two">
-        <div>
-          <label>Filter sets</label>
-          <input id="setFilter" type="search" placeholder="Type a set name — e.g. Evolving Skies, Prismatic" autocomplete="off" />
-        </div>
-        <div>
-          <label>Set</label>
-          <select id="set"></select>
-          <p class="tip"><a id="ebayLink" href="#" target="_blank" rel="noopener">eBay last sold for this pack →</a>
-            · <a id="setPageLink" href="set.html">Open set page →</a>
-            · <a id="pricesLink" href="prices.html">Search card prices →</a></p>
-          <p class="tip" id="profileTip"></p>
-          <div id="chaseLive" class="chase-live" hidden>
-            <div class="chase-live-head">
-              <span class="badge live">LIVE</span>
-              <span class="tip">Top catalog chase prices for this set (TCGPlayer snapshots)</span>
-            </div>
-            <div id="chaseLiveList" class="chase-live-list"></div>
-            <p class="tip" id="chaseLiveHint"></p>
-          </div>
-        </div>
-        <div>
-          <label>Market pack cost ($ from eBay sold)</label>
-          <input id="cost" type="number" step="0.01" value="" placeholder="Paste last-sold / typical sold $" inputmode="decimal" />
-        </div>
-        <div>
-          <label>Packs you will rip</label>
-          <input id="packs" type="number" value="36" min="1" inputmode="numeric" />
-        </div>
-        <div>
-          <label>Avg value of “dead” pack ($)</label>
-          <input id="dead" type="number" step="0.01" value="1.20" inputmode="decimal" />
-        </div>
-        <div>
-          <label>Chase hit rate (1 in X packs)</label>
-          <input id="odds" type="number" value="72" min="1" inputmode="numeric" />
-        </div>
-        <div>
-          <label>Avg chase card value ($)</label>
-          <input id="chase" type="number" step="0.01" value="85" inputmode="decimal" />
-        </div>
+    <div class="card rip">
+      <h1>Cost of ripping</h1>
+      <label for="set">Set</label>
+      <input id="setFilter" type="search" placeholder="Search sets" aria-label="Search sets" autocomplete="off" />
+      <select id="set"></select>
+      <div class="rip-cost-head">
+        <label for="cost">Pack cost</label>
+        <a id="ebayLink" class="rip-ebay" href="#" target="_blank" rel="noopener">eBay sold</a>
       </div>
-      <button type="button" id="go">Calculate rip EV</button>
-      <div class="result" id="result">
-        <div class="stats">
-          <div class="stat"><span class="tip">EV / pack</span><b id="evp">—</b></div>
-          <div class="stat"><span class="tip">Total EV</span><b id="evt">—</b></div>
-          <div class="stat"><span class="tip">Expected profit</span><b id="profit">—</b></div>
-          <div class="stat"><span class="tip">Break-even pack cost</span><b id="be">—</b></div>
-        </div>
-        <p class="tip" id="tip">Enter a market pack cost from eBay sold to see live EV.</p>
-      </div>
+      <input id="cost" type="number" step="0.01" min="0" inputmode="decimal" placeholder="0.00" />
+      <p id="ripLine" class="rip-line" aria-live="polite">—</p>
+      <p class="rip-note">Estimates only</p>
+      <h2>Top cards</h2>
+      <ul id="chaseList" class="rip-cards"></ul>
     </div>
     <footer>PackEV</footer>
   </div>
@@ -91,46 +49,175 @@
     const params = new URLSearchParams(location.search);
     let setsById = {};
     let allSets = [];
-    const PROFILE_LABELS = {
-      'chase-heavy': 'Chase-heavy set (tighter odds, higher chase $)',
-      'specialty': 'Specialty / promo-style product',
-      'modern-sv': 'Modern Scarlet & Violet era defaults',
-      'swsh': 'Sword & Shield era defaults',
-      'sm': 'Sun & Moon era defaults',
-      'bw-xy': 'BW / XY era defaults',
-      'vintage': 'Vintage era defaults'
+    let chaseGen = 0;
+
+    /* Rarity-slot bands already used on the set page. Exact match only:
+       "Rare Ultra" must not swallow a different string, and "Rare" must not
+       swallow "Rare Shiny". */
+    const RARITY_ODDS = {
+      'Hyper Rare': '1 in 80–160 packs',
+      'Rare Rainbow': '1 in 60–150 packs',
+      'Rare Secret': '1 in 40–100+ packs',
+      'Special Illustration Rare': '1 in 40–90 packs',
+      'Illustration Rare': '1 in 12–20 packs',
+      'Rare Ultra': '1 in 6–12 packs',
+      'Double Rare': '1 in 6–10 packs',
+      'Rare Holo': '1 in 3–6 packs',
+      'Rare': '1 in 1 pack'
     };
+    /* Existing rarer bands, used when this print is scarcer than the shared slot. */
+    const RARER_CHASE = '1 in 80–160 packs';
+    const RARER_SECRET = '1 in 40–100+ packs';
 
     function money(n) {
       const v = Number(n);
       if (!Number.isFinite(v)) return '—';
-      return (v >= 0 ? '$' : '-$') + Math.abs(v).toFixed(2);
+      return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-
-    let chaseLiveGen = 0;
-
-    function moneyPlain(n) {
-      const v = Number(n);
-      if (!Number.isFinite(v)) return '—';
-      if (Math.abs(v) >= 1000) return '$' + Math.round(v).toLocaleString();
-      return '$' + v.toFixed(2);
+    function slotOdds(rarity) {
+      if (!rarity || !Object.prototype.hasOwnProperty.call(RARITY_ODDS, rarity)) return '';
+      return RARITY_ODDS[rarity];
     }
 
-    async function loadChaseLive(setId) {
-      const box = $('chaseLive');
-      const list = $('chaseLiveList');
-      const hint = $('chaseLiveHint');
-      if (!box || !list || !hint) return;
-      const gen = ++chaseLiveGen;
-      box.hidden = false;
-      list.innerHTML = '<span class="tip">Loading live chase…</span>';
-      hint.textContent = '';
+    function bandLow(text) {
+      const m = String(text || '').match(/1 in (\d+)/);
+      return m ? Number(m[1]) : 0;
+    }
+
+    function collector(number) {
+      const m = String(number || '').trim().match(/^([A-Za-z]*)(\d+)$/);
+      if (!m) return null;
+      return { prefix: m[1].toUpperCase(), n: Number(m[2]) };
+    }
+
+    /* Alt arts share the full art's rarity and sit on the next collector number. */
+    function laterPrint(card, peers) {
+      const mine = collector(card.number);
+      if (!mine || !Array.isArray(peers)) return false;
+      return peers.some(function (p) {
+        if (!p || p.id === card.id) return false;
+        if (p.name !== card.name || p.rarity !== card.rarity) return false;
+        const other = collector(p.number);
+        return !!(other && other.prefix === mine.prefix && other.n < mine.n);
+      });
+    }
+
+    function oddsFor(card, peers) {
+      const slot = slotOdds(card.rarity);
+      const mine = collector(card.number);
+      const subset = !!(mine && mine.prefix);
+      const later = laterPrint(card, peers);
+      if (!later && !subset) return slot;
+      if (!slot) return '';
+      if (bandLow(slot) >= 40) {
+        if (!later) return slot;
+        if (bandLow(slot) >= bandLow(RARER_CHASE)) return '';
+        return RARER_CHASE;
+      }
+      return RARER_SECRET;
+    }
+
+    function modelOf(s) {
+      return {
+        dead: s && s.evDeadUsd != null ? Number(s.evDeadUsd) : 1.2,
+        odds: s && s.evChaseOdds != null ? Number(s.evChaseOdds) : 72,
+        chase: s && s.evChaseUsd != null ? Number(s.evChaseUsd) : 85
+      };
+    }
+
+    function emptyChase(text) {
+      const list = $('chaseList');
+      list.innerHTML = '';
+      const li = document.createElement('li');
+      li.className = 'rip-empty';
+      li.textContent = text;
+      list.appendChild(li);
+    }
+
+    function renderChase(rows, peers) {
+      const list = $('chaseList');
+      list.innerHTML = '';
+      rows.forEach(function (r) {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = 'card.html?id=' + encodeURIComponent(r.id);
+        if (r.image_small) {
+          const img = document.createElement('img');
+          img.alt = '';
+          img.loading = 'lazy';
+          img.src = r.image_small;
+          a.appendChild(img);
+        } else {
+          const ph = document.createElement('span');
+          ph.className = 'rip-ph';
+          a.appendChild(ph);
+        }
+        const name = document.createElement('span');
+        name.className = 'rip-name';
+        name.textContent = r.name || 'Card';
+        const price = document.createElement('span');
+        price.className = 'rip-price';
+        price.textContent = money(r.market_price_usd);
+        a.appendChild(name);
+        a.appendChild(price);
+        const odds = oddsFor(r, peers);
+        if (odds) {
+          const o = document.createElement('span');
+          o.className = 'rip-odds';
+          o.textContent = odds;
+          a.appendChild(o);
+        }
+        li.appendChild(a);
+        list.appendChild(li);
+      });
+    }
+
+    async function loadPeers(setId, rows, gen) {
+      const names = [];
+      rows.forEach(function (r) {
+        if (r.name && names.indexOf(r.name) < 0) names.push(r.name);
+      });
+      if (!names.length) return [];
       const cfg = window.PACK_EV_SUPABASE || {};
       const base = String(cfg.SUPABASE_URL || '').replace(/\/$/, '');
       const key = String(cfg.SUPABASE_ANON_KEY || cfg.SUPABASE_PUBLISHABLE_KEY || '');
-      if (!base || !key || !setId) {
-        box.hidden = true;
+      const quoted = names.map(function (n) {
+        return '"' + String(n).replace(/"/g, '') + '"';
+      }).join(',');
+      const q = new URLSearchParams();
+      q.set('select', 'id,name,number,rarity');
+      q.set('set_id', 'eq.' + setId);
+      q.set('name', 'in.(' + quoted + ')');
+      q.set('limit', '50');
+      try {
+        const res = await fetch(base + '/rest/v1/cards?' + q.toString(), {
+          headers: {
+            Accept: 'application/json',
+            apikey: key,
+            Authorization: 'Bearer ' + key
+          }
+        });
+        if (gen !== chaseGen || !res.ok) return [];
+        const peers = await res.json();
+        return Array.isArray(peers) ? peers : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    async function loadChase(setId) {
+      const gen = ++chaseGen;
+      if (!setId) {
+        emptyChase('None yet');
+        return;
+      }
+      emptyChase('Loading…');
+      const cfg = window.PACK_EV_SUPABASE || {};
+      const base = String(cfg.SUPABASE_URL || '').replace(/\/$/, '');
+      const key = String(cfg.SUPABASE_ANON_KEY || cfg.SUPABASE_PUBLISHABLE_KEY || '');
+      if (!base || !key) {
+        emptyChase('None yet');
         return;
       }
       try {
@@ -146,64 +233,20 @@
             Authorization: 'Bearer ' + key
           }
         });
-        if (gen !== chaseLiveGen) return;
+        if (gen !== chaseGen) return;
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const rows = await res.json();
-        if (gen !== chaseLiveGen) return;
+        if (gen !== chaseGen) return;
         if (!Array.isArray(rows) || !rows.length) {
-          list.innerHTML = '<span class="tip">No $15+ chase prices in catalog for this set yet.</span>';
-          hint.textContent = 'Use the era default above, or check Prices search.';
+          emptyChase('None yet');
           return;
         }
-        list.innerHTML = '';
-        rows.forEach(function (r) {
-          const a = document.createElement('a');
-          a.className = 'chase-chip';
-          a.href = 'card.html?id=' + encodeURIComponent(r.id);
-          a.title = (r.name || '') + ' · ' + (r.rarity || '');
-          const img = document.createElement('img');
-          img.className = 'thumb';
-          img.alt = '';
-          img.loading = 'lazy';
-          if (r.image_small) img.src = r.image_small;
-          const meta = document.createElement('span');
-          meta.className = 'chase-chip-meta';
-          meta.innerHTML = '<b>' + moneyPlain(r.market_price_usd) + '</b>'
-            + '<span class="sub">' + String(r.name || '').slice(0, 22) + '</span>';
-          a.appendChild(img);
-          a.appendChild(meta);
-          const use = document.createElement('button');
-          use.type = 'button';
-          use.className = 'chase-use';
-          use.textContent = 'Use';
-          use.onclick = function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            $('chase').value = Number(r.market_price_usd).toFixed(2);
-            calc();
-          };
-          a.appendChild(use);
-          list.appendChild(a);
-        });
-        const avg = rows.reduce(function (s, r) { return s + Number(r.market_price_usd); }, 0) / rows.length;
-        hint.innerHTML = '';
-        const tip = document.createTextNode(
-          'Avg of these LIVE hits: ' + moneyPlain(avg) + '. '
-        );
-        hint.appendChild(tip);
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'linkish';
-        btn.textContent = 'Fill chase with avg';
-        btn.onclick = function () {
-          $('chase').value = avg.toFixed(2);
-          calc();
-        };
-        hint.appendChild(btn);
+        const peers = await loadPeers(setId, rows, gen);
+        if (gen !== chaseGen) return;
+        renderChase(rows, peers);
       } catch (err) {
-        if (gen !== chaseLiveGen) return;
-        list.innerHTML = '<span class="tip">Could not load live chase right now.</span>';
-        hint.textContent = String(err && err.message ? err.message : err);
+        if (gen !== chaseGen) return;
+        emptyChase('Couldn\u2019t load');
       }
     }
 
@@ -219,11 +262,10 @@
       if (!list.length) {
         const o = document.createElement('option');
         o.value = '';
-        o.textContent = 'No sets match filter';
+        o.textContent = 'No sets match';
         sel.appendChild(o);
         return;
       }
-      // Newest first (same as before: reverse release order from sorted JSON)
       list.slice().reverse().forEach(s => {
         const o = document.createElement('option');
         o.value = s.id;
@@ -236,54 +278,52 @@
 
     function syncSet() {
       const s = setsById[$('set').value];
-      if (!s) return;
-      $('ebayLink').href = s.ebaySoldUrl || '#';
-      $('setPageLink').href = 'set.html?id=' + encodeURIComponent(s.id);
-      $('pricesLink').href = 'prices.html?q=' + encodeURIComponent(s.name);
+      const link = $('ebayLink');
+      if (!s) {
+        link.hidden = true;
+        $('ripLine').textContent = '—';
+        emptyChase('None yet');
+        return;
+      }
+      if (s.ebaySoldUrl) {
+        link.href = s.ebaySoldUrl;
+        link.hidden = false;
+      } else {
+        link.hidden = true;
+      }
       if (s.ebayLastSoldUsd != null) $('cost').value = Number(s.ebayLastSoldUsd).toFixed(2);
-      if (s.evDeadUsd != null) $('dead').value = Number(s.evDeadUsd).toFixed(2);
-      if (s.evChaseOdds != null) $('odds').value = Number(s.evChaseOdds);
-      if (s.evChaseUsd != null) $('chase').value = Number(s.evChaseUsd).toFixed(2);
-      const label = PROFILE_LABELS[s.evProfile] || 'Custom / default EV profile';
-      $('profileTip').textContent = 'EV profile: ' + label
-        + (s.packMsrpUsd != null ? ' · era MSRP hint $' + Number(s.packMsrpUsd).toFixed(2) + ' (not market)' : '')
-        + (s.cardCount != null ? ' · ' + s.cardCount + ' cards in set' : '');
-      loadChaseLive(s.id);
+      loadChase(s.id);
       calc();
     }
 
     function calc() {
-      const cost = +$('cost').value, packs = +$('packs').value, dead = +$('dead').value;
-      const odds = +$('odds').value, chase = +$('chase').value;
-      $('result').style.display = 'block';
-      if (!cost || cost <= 0) {
-        $('evp').textContent = '—';
-        $('evt').textContent = '—';
-        $('profit').textContent = '—';
-        $('be').textContent = '—';
-        $('tip').textContent = 'Enter the market pack cost from eBay last sold to see live EV.';
+      const line = $('ripLine');
+      const s = setsById[$('set').value];
+      const { dead, odds, chase } = modelOf(s);
+      if (!s || !odds || odds < 1 || !Number.isFinite(dead) || !Number.isFinite(chase)) {
+        line.textContent = '—';
         return;
       }
-      if (!packs || packs < 1 || !odds || odds < 1) {
-        $('tip').textContent = 'Packs and chase odds must be at least 1.';
+      const ev = dead * (1 - 1 / odds) + chase * (1 / odds);
+      const cost = Number($('cost').value);
+      line.textContent = '';
+      if (!Number.isFinite(cost) || cost <= 0) {
+        line.append('EV ' + money(ev) + ' per pack');
         return;
       }
-      const pHit = 1 / odds;
-      const evPack = dead * (1 - pHit) + chase * pHit;
-      const totalEv = evPack * packs;
-      const spend = cost * packs;
-      const profit = totalEv - spend;
-      const edge = evPack - cost;
-      $('evp').textContent = '$' + evPack.toFixed(2);
-      $('evt').textContent = '$' + totalEv.toFixed(2);
-      $('profit').textContent = (profit >= 0 ? '+$' : '-$') + Math.abs(profit).toFixed(2);
-      $('profit').className = profit >= 0 ? 'up' : 'down';
-      $('be').textContent = '$' + evPack.toFixed(2);
-      const name = $('set').selectedOptions[0]?.textContent.split(' (')[0] || 'this set';
-      const edgeTxt = (edge >= 0 ? '+' : '-') + '$' + Math.abs(edge).toFixed(2) + ' vs cost / pack';
-      $('tip').textContent = 'Spend $' + spend.toFixed(2) + ' ripping ' + packs + ' packs of ' + name
-        + ' at $' + cost.toFixed(2) + ' market cost. Hit chance ~' + (pHit * 100).toFixed(2)
-        + '% per pack. Edge ' + edgeTxt + '. Break-even pack cost equals EV/pack.';
+      const edge = ev - cost;
+      line.append('EV ' + money(ev) + ' per pack · ');
+      const span = document.createElement('span');
+      if (Math.abs(edge) < 0.005) {
+        span.textContent = 'even';
+      } else if (edge > 0) {
+        span.className = 'up';
+        span.textContent = money(edge) + ' gain';
+      } else {
+        span.className = 'down';
+        span.textContent = money(Math.abs(edge)) + ' loss';
+      }
+      line.append(span);
     }
 
     fetch('data/sets.json').then(r => r.json()).then(sets => {
@@ -298,16 +338,11 @@
         fillSetOptions(this.value);
         if ($('set').value !== before) syncSet();
       };
-      ['cost', 'packs', 'dead', 'odds', 'chase'].forEach(id => {
-        $(id).addEventListener('input', calc);
-        $(id).addEventListener('change', calc);
-      });
-      $('go').onclick = calc;
-      calc();
+      $('cost').addEventListener('input', calc);
+      $('cost').addEventListener('change', calc);
     });
   </script>
   <script src="border.js"></script>
   <script src="js/auth.js"></script>
-
 </body>
 </html>
