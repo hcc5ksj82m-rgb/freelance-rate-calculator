@@ -135,6 +135,7 @@
           + '<div class="price">' + fmtPrice(p) + '</div>'
           + PackEVGraded.render(c, c.set && c.set.name || '') + '</div></article>';
       }).join('');
+      if (window.PackEVGraded && PackEVGraded.schedule) PackEVGraded.schedule(gridEl);
       gridEl.querySelectorAll('.card-hit[data-card-id]').forEach(el => {
         const go = function (e) {
           if (e.target.closest && e.target.closest('a')) return;
@@ -283,6 +284,7 @@
           + '<div class="price">' + fmtPrice(p) + '</div>'
           + PackEVGraded.render(c, c.set && c.set.name || '') + '</div></article>';
       }).join('');
+      if (window.PackEVGraded && PackEVGraded.schedule) PackEVGraded.schedule(grid);
 
       grid.querySelectorAll('.card-hit').forEach(el => {
         const go = function (e) {

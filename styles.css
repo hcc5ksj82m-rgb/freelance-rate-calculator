@@ -103,7 +103,7 @@ footer{text-align:center;color:#94a3b8;font-size:.75rem;margin:1.2rem 0}
 .stat{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:.7rem;text-align:center}
 .stat b{display:block;font-size:1.15rem;color:#0f172a}
 
-.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.75rem;margin-top:1rem}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.75rem;margin-top:1rem}
 .poke-card{
   background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;
   display:flex;flex-direction:column;box-shadow:0 4px 12px #0f172a0a;
@@ -119,6 +119,22 @@ footer{text-align:center;color:#94a3b8;font-size:.75rem;margin:1.2rem 0}
 .graded-label{font-weight:700;color:#334155}
 .graded-item{white-space:nowrap}
 .graded-row a{color:#2563eb;text-decoration:underline;white-space:nowrap}
+.grade-board{margin-top:.4rem}
+.grade-label{font-size:.62rem;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:#334155}
+.grade-row{display:flex;flex-wrap:wrap;gap:.15rem .28rem;align-items:flex-end;margin-top:.18rem}
+.grade-co{flex:0 0 1.7rem;font-size:.62rem;font-weight:800;color:#334155;line-height:1.1;padding-bottom:.05rem}
+.grade-cell{
+  display:inline-flex;flex-direction:column;min-width:1.7rem;text-decoration:none;color:inherit;line-height:1.05
+}
+.grade-cell:hover{text-decoration:none}
+.grade-cell:hover .grade-val{text-decoration:underline}
+.grade-name{font-size:.58rem;color:var(--muted)}
+.grade-val{font-size:.68rem;font-weight:800;color:#b45309}
+.grade-note{margin:.35rem 0 0;font-size:.75rem;color:var(--muted)}
+.poke-card .grade-note,.mini-card .grade-note,.price-card .grade-note{display:none}
+.card-detail .grade-cell{min-width:2.4rem}
+.card-detail .grade-name{font-size:.68rem}
+.card-detail .grade-val{font-size:.9rem}
 .toolbar{display:flex;gap:.5rem;flex-wrap:wrap;align-items:end;margin:.5rem 0}
 .toolbar > div{flex:1;min-width:140px}
 .loading{color:var(--muted);padding:1rem 0}
@@ -129,7 +145,7 @@ tr.set-row:hover td{background:#fffbeb}
 tr.set-row.open td{background:#fef3c7}
 tr.expand-row td{padding:0;background:#f8fafc;border-bottom:1px solid var(--line)}
 .expand-inner{padding:.85rem}
-.mini-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.55rem;max-height:520px;overflow:auto}
+.mini-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:.55rem;max-height:640px;overflow:auto}
 .mini-card{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 2px 8px #0f172a08}
 .mini-card img{width:100%;aspect-ratio:63/88;object-fit:cover;display:block;background:#f8fafc}
 .mini-card .m{padding:.45rem .5rem .55rem;font-size:.75rem}
@@ -196,7 +212,7 @@ button:disabled{opacity:.55;cursor:not-allowed;filter:none}
 /* Prices page — search results and charts */
 .search-section{margin-top:.75rem}
 .price-grid{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
   gap:.65rem;margin-top:.75rem;
 }
 .price-card{

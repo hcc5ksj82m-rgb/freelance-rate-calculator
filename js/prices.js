@@ -258,6 +258,7 @@
         + '<div class="tip">' + esc(c.source || '') + (c.printType ? ' · ' + esc(c.printType) : '') + '</div>'
         + '</div></article>';
     }).join('');
+    if (window.PackEVGraded && PackEVGraded.schedule) PackEVGraded.schedule(grid);
   }
 
   function clearSearchUi() {

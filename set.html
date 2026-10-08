@@ -177,6 +177,7 @@
           </div>
         </article>`;
       }).join('');
+      if (window.PackEVGraded && PackEVGraded.schedule) PackEVGraded.schedule($('grid'));
       const priced = cards.map(priceOf).filter(Boolean);
       $('nCards').textContent = cards.length;
       $('nPriced').textContent = priced.length;
