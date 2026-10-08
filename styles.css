@@ -477,3 +477,14 @@ button.linkish{
 .mover-p{font-weight:800;color:#b45309}
 .mover-p .up,.mover-p .down{font-weight:700;margin-left:.25rem}
 @media (max-width:640px){.movers-grid{grid-template-columns:1fr}}
+
+/* Home upcoming shows teaser */
+.upcoming-shows{margin:1rem 0 .5rem;padding:.85rem;border:1px solid var(--line);border-radius:14px;background:#fffdf7}
+.upcoming-shows h2{margin:0;font-size:1.05rem;color:#0f172a}
+.upcoming-shows-lead{display:block;margin:.35rem 0 .6rem}
+.show-teaser-row{padding:.55rem 0;border-top:1px solid var(--line)}
+.show-teaser-row:first-child{border-top:0;padding-top:.1rem}
+.show-teaser-top{display:flex;flex-wrap:wrap;gap:.35rem .5rem;align-items:center}
+.show-teaser-top strong{color:#0f172a}
+.show-teaser-meta{margin:.15rem 0 0;font-size:.85rem}
+.show-teaser-foot{margin:.65rem 0 0}

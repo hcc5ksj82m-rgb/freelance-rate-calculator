@@ -86,6 +86,16 @@
         to: ymd(new Date(t.getFullYear(), t.getMonth() + 2, 0))
       };
     }
+    if (when === 'weekend') {
+      // Local Saturday 00:00 through Sunday 23:59 (date-inclusive).
+      var day = t.getDay();
+      var sat = new Date(t.getTime());
+      if (day === 0) sat.setDate(sat.getDate() - 1);
+      else if (day !== 6) sat.setDate(sat.getDate() + (6 - day));
+      var sun = new Date(sat.getTime());
+      sun.setDate(sun.getDate() + 1);
+      return { from: ymd(sat), to: ymd(sun) };
+    }
     return null;
   }
 
@@ -98,7 +108,12 @@
   }
 
   function whenLabel(when) {
-    var map = { '30': 'in the next 30 days', month: 'this month', 'next-month': 'next month' };
+    var map = {
+      '30': 'in the next 30 days',
+      month: 'this month',
+      'next-month': 'next month',
+      weekend: 'this weekend'
+    };
     return map[when] || '';
   }
 

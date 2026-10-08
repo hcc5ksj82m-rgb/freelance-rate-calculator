@@ -1,6 +1,6 @@
 {
-  "lastUpdated": "2026-10-08",
-  "note": "Curated static listing of real Pokemon / TCG collector shows in English-speaking countries. Dates and venues change — always confirm on the organizer link. Not affiliated with The Pokemon Company. No fabricated DEMO events.",
+  "lastUpdated": "2026-10-09",
+  "note": "Curated static listing of real Pokemon / TCG collector shows in English-speaking countries. Dates and venues change — always confirm on the organizer link. Not affiliated with The Pokemon Company. No invented events; last refreshed 2026-10-09 Australia/Sydney.",
   "countries": [
     {
       "id": "usa",
@@ -62,7 +62,7 @@
               "venue": "Donald E. Stephens Convention Center, Hall A, Rosemont, IL",
               "url": "https://collectaconusa.com/chicago-2/",
               "type": "convention",
-              "notes": "Large touring trading card / pop-culture con with deep Pokemon vendor floor."
+              "notes": "Large touring trading card / pop-culture con with deep Pokemon vendor floor. Verified 2026-10-09 on collectaconusa.com/chicago-2 — Oct 10–11 still listed (Sat 10am–6pm / Sun 10am–5pm, Donald E. Stephens Hall A, Rosemont). This weekend for US users."
             },
             {
               "name": "2027 Pokémon North America International Championships",
@@ -689,6 +689,14 @@
               "url": "https://www.treasurecon.com.au/",
               "type": "convention",
               "notes": "Announced by the organizer (dates confirmed, venue/tickets not yet released). Confirm before travelling."
+            },
+            {
+              "name": "Collect-It Con Melbourne — Trading Card Edition",
+              "dates": "2026-11-14",
+              "venue": "Level 1, Building 1, Brandon Office Park, Melbourne VIC",
+              "url": "https://collectitcon.com.au/2026-trading-card-edition/",
+              "type": "convention",
+              "notes": "Sat 14 Nov 2026, 10am–4pm. Dedicated TCG / sports / trading-card edition. Verified 2026-10-09 on collectitcon.com.au."
             }
           ]
         },
@@ -724,9 +732,49 @@
               "name": "TCXPO Oran Park",
               "dates": "2026-12-06",
               "venue": "Oran Park Leisure Centre, Oran Park (south-west Sydney)",
-              "url": "https://cardatlas.app/blog/shows/international/",
+              "url": "https://www.collectorcon.com.au",
               "type": "show",
-              "notes": "Greater Sydney trading-card expo day."
+              "notes": "Greater Sydney trading-card expo day. Verified still listed 2026-10-09 on collectorcon.com.au for Sunday 6 December."
+            },
+            {
+              "name": "Collector Con Campbelltown (Minto)",
+              "dates": "2026-10-25",
+              "venue": "Minto Indoor Sports Centre, 9 Redfern Road, Minto NSW 2566",
+              "url": "https://www.collectorcon.com.au/collector-con-campbelltown/",
+              "type": "show",
+              "notes": "Official Collector Con Campbelltown stop (Sun 9:30am–3:00pm). 250+ vendor tables including trading cards. Confirmed 2026-10-09 via collectorcon.com.au + NSW listings. TCG Calendar also lists this venue; single day (not Oct 26)."
+            },
+            {
+              "name": "Onestoppokeshop Pokemon TCG League Cup — October 2026",
+              "dates": "2026-10-17",
+              "venue": "Onestoppokeshop, 303/354 Eastern Valley Way, Chatswood NSW 2067",
+              "url": "https://events.humanitix.com/onestoppokeshop-pokemon-tcg-league-cup-october-2026",
+              "type": "league",
+              "notes": "Sat 17 Oct 2026, 9am–6pm AEDT (reg 9am, start 9:30am). Capacity 30, $25 entry. Verified Humanitix 2026-10-09."
+            },
+            {
+              "name": "Onestoppokeshop Delta Reign Pre Release #2",
+              "dates": "2026-10-31",
+              "venue": "Onestoppokeshop, 303 level 2/354 Eastern Valley Way, Chatswood NSW 2067",
+              "url": "https://events.humanitix.com/delta-reign-pre-release-2",
+              "type": "prerelease",
+              "notes": "Sat 31 Oct 2026, 12pm–4:30pm AEDT sealed Build & Battle. $50. Verified Humanitix 2026-10-09."
+            },
+            {
+              "name": "Hobby Collectors Australia — Delta Reign Prerelease (ME06)",
+              "dates": "2026-10-24 – 2026-10-30",
+              "venue": "Hobby Collectors Australia, Shop 2, 20–26 Ware St, Fairfield NSW 2165",
+              "url": "https://hobbycollectorsaustralia.com.au/products/pokemon-tcg-mega-evolution-delta-reign-prerelease-event-ticket-me06",
+              "type": "prerelease",
+              "notes": "Session window ahead of 6 Nov 2026 set release: Sat 24 Oct 11:00am · Tue 27 Oct 6:00pm · Thu 29 Oct 6:00pm · Fri 30 Oct 6:00pm. $55 incl Build & Battle Box. Product page listed sold out when checked 2026-10-09; details still published."
+            },
+            {
+              "name": "Collector Con Penrith",
+              "dates": "2026-11-22",
+              "venue": "Penrith (Collector Con — three halls; confirm exact hall address on organizer site closer to date)",
+              "url": "https://www.collectorcon.com.au",
+              "type": "show",
+              "notes": "Official site lists Penrith Sunday 22 Nov 2026, 9:30am–3:00pm, 400+ tables including trading cards. Verified 2026-10-09 on collectorcon.com.au."
             }
           ]
         },
@@ -822,7 +870,7 @@
               "venue": "Card Merchant Wellington, 49 Manners Street",
               "url": "https://cardmerchantwellington.co.nz/",
               "type": "league",
-              "notes": "Past (2026-09-12). Quarterly League Cup in the capital — watch the store calendar for the next one."
+              "notes": "Past (ended 2026-09-12). Past (2026-09-12). Quarterly League Cup in the capital — watch the store calendar for the next one."
             },
             {
               "name": "Wellington Pokemon / TCG League events",
