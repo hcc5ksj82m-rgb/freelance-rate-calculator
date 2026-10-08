@@ -51,18 +51,23 @@
     let allSets = [];
     let chaseGen = 0;
 
-    /* Same rarity bands already used on the set page, written as "1 in N". */
+    /* Rarity-slot bands already used on the set page. Exact match only:
+       "Rare Ultra" must not swallow a different string, and "Rare" must not
+       swallow "Rare Shiny". */
     const RARITY_ODDS = {
+      'Hyper Rare': '1 in 80–160 packs',
+      'Rare Rainbow': '1 in 60–150 packs',
+      'Rare Secret': '1 in 40–100+ packs',
       'Special Illustration Rare': '1 in 40–90 packs',
       'Illustration Rare': '1 in 12–20 packs',
-      'Hyper Rare': '1 in 80–160 packs',
-      'Double Rare': '1 in 6–10 packs',
-      'Rare Rainbow': '1 in 60–150 packs',
-      'Rare Secret': '1 in 40–100 packs',
       'Rare Ultra': '1 in 6–12 packs',
+      'Double Rare': '1 in 6–10 packs',
       'Rare Holo': '1 in 3–6 packs',
       'Rare': '1 in 1 pack'
     };
+    /* Existing rarer bands, used when this print is scarcer than the shared slot. */
+    const RARER_CHASE = '1 in 80–160 packs';
+    const RARER_SECRET = '1 in 40–100+ packs';
 
     function money(n) {
       const v = Number(n);
@@ -70,14 +75,47 @@
       return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    function oddsText(rarity) {
-      if (!rarity) return '';
-      if (Object.prototype.hasOwnProperty.call(RARITY_ODDS, rarity)) return RARITY_ODDS[rarity];
-      const r = String(rarity).toLowerCase();
-      const key = Object.keys(RARITY_ODDS)
-        .sort((a, b) => b.length - a.length)
-        .find(k => r.includes(k.toLowerCase()));
-      return key ? RARITY_ODDS[key] : '';
+    function slotOdds(rarity) {
+      if (!rarity || !Object.prototype.hasOwnProperty.call(RARITY_ODDS, rarity)) return '';
+      return RARITY_ODDS[rarity];
+    }
+
+    function bandLow(text) {
+      const m = String(text || '').match(/1 in (\d+)/);
+      return m ? Number(m[1]) : 0;
+    }
+
+    function collector(number) {
+      const m = String(number || '').trim().match(/^([A-Za-z]*)(\d+)$/);
+      if (!m) return null;
+      return { prefix: m[1].toUpperCase(), n: Number(m[2]) };
+    }
+
+    /* Alt arts share the full art's rarity and sit on the next collector number. */
+    function laterPrint(card, peers) {
+      const mine = collector(card.number);
+      if (!mine || !Array.isArray(peers)) return false;
+      return peers.some(function (p) {
+        if (!p || p.id === card.id) return false;
+        if (p.name !== card.name || p.rarity !== card.rarity) return false;
+        const other = collector(p.number);
+        return !!(other && other.prefix === mine.prefix && other.n < mine.n);
+      });
+    }
+
+    function oddsFor(card, peers) {
+      const slot = slotOdds(card.rarity);
+      const mine = collector(card.number);
+      const subset = !!(mine && mine.prefix);
+      const later = laterPrint(card, peers);
+      if (!later && !subset) return slot;
+      if (!slot) return '';
+      if (bandLow(slot) >= 40) {
+        if (!later) return slot;
+        if (bandLow(slot) >= bandLow(RARER_CHASE)) return '';
+        return RARER_CHASE;
+      }
+      return RARER_SECRET;
     }
 
     function modelOf(s) {
@@ -97,7 +135,7 @@
       list.appendChild(li);
     }
 
-    function renderChase(rows) {
+    function renderChase(rows, peers) {
       const list = $('chaseList');
       list.innerHTML = '';
       rows.forEach(function (r) {
@@ -123,7 +161,7 @@
         price.textContent = money(r.market_price_usd);
         a.appendChild(name);
         a.appendChild(price);
-        const odds = oddsText(r.rarity);
+        const odds = oddsFor(r, peers);
         if (odds) {
           const o = document.createElement('span');
           o.className = 'rip-odds';
@@ -133,6 +171,39 @@
         li.appendChild(a);
         list.appendChild(li);
       });
+    }
+
+    async function loadPeers(setId, rows, gen) {
+      const names = [];
+      rows.forEach(function (r) {
+        if (r.name && names.indexOf(r.name) < 0) names.push(r.name);
+      });
+      if (!names.length) return [];
+      const cfg = window.PACK_EV_SUPABASE || {};
+      const base = String(cfg.SUPABASE_URL || '').replace(/\/$/, '');
+      const key = String(cfg.SUPABASE_ANON_KEY || cfg.SUPABASE_PUBLISHABLE_KEY || '');
+      const quoted = names.map(function (n) {
+        return '"' + String(n).replace(/"/g, '') + '"';
+      }).join(',');
+      const q = new URLSearchParams();
+      q.set('select', 'id,name,number,rarity');
+      q.set('set_id', 'eq.' + setId);
+      q.set('name', 'in.(' + quoted + ')');
+      q.set('limit', '50');
+      try {
+        const res = await fetch(base + '/rest/v1/cards?' + q.toString(), {
+          headers: {
+            Accept: 'application/json',
+            apikey: key,
+            Authorization: 'Bearer ' + key
+          }
+        });
+        if (gen !== chaseGen || !res.ok) return [];
+        const peers = await res.json();
+        return Array.isArray(peers) ? peers : [];
+      } catch (e) {
+        return [];
+      }
     }
 
     async function loadChase(setId) {
@@ -170,7 +241,9 @@
           emptyChase('None yet');
           return;
         }
-        renderChase(rows);
+        const peers = await loadPeers(setId, rows, gen);
+        if (gen !== chaseGen) return;
+        renderChase(rows, peers);
       } catch (err) {
         if (gen !== chaseGen) return;
         emptyChase('Couldn\u2019t load');
