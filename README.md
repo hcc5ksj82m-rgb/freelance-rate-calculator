@@ -12,6 +12,10 @@ Live: https://hcc5ksj82m-rgb.github.io/freelance-rate-calculator/
 - **$0 history:** daily snapshots of `cards.market_price_usd`. One-time Cardmarket avg1/avg7/avg30 backfill (~1/7/30 days ago) only for cards **without** TCGPlayer prices (avoids mixing USD/EUR on one chart). No paid APIs. Daily routine: after catalog sync run `scripts/snapshot-prices.py` or `sync-pokemon-cards.py --snapshot-history` / `--snapshot-only`.
 - **Latest movers (home):** `public.card_daily_movers` view (security_invoker, anon SELECT) compares each LIVE-refreshed card's newest `live_api` price with its previous snapshot. The daily routine refreshes the ~150 most valuable catalog cards plus chase cards from the Pokemon TCG API (`source='live_api'`), then snapshots everything else as `catalog`. If the API drops a card's priced variant (e.g. reverse holo gone, only normal left), keep the previous price instead of logging a fake crash.
 
+## Pack rip
+
+`rip.html` prices a pack as bulk plus one hit slot. Commons and uncommons use the non-reverse print; the reverse slot uses the reverse-holo market when that print exists. Each hit rarity is the average of the priced cards in it, at an era estimate (official odds are unpublished). Chase cards prefer a last-10 sold average, then a live TCGPlayer market, then catalog history. Paste an eBay sold pack price to compare profit. Release MSRP is not the market cost.
+
 
 ## Full catalog (Supabase)
 
