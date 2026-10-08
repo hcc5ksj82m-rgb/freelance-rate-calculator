@@ -175,6 +175,7 @@
 
     if (window.PackEVGraded) {
       $('gradedMount').innerHTML = PackEVGraded.render(card, setName);
+      if (PackEVGraded.schedule) PackEVGraded.schedule($('gradedMount'));
     }
 
     var ebay = ebaySoldUrl(card.name, setName, card.number);
