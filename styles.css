@@ -373,11 +373,42 @@ button:disabled{opacity:.55;cursor:not-allowed;filter:none}
 .mini-card-link:hover{text-decoration:none;box-shadow:0 6px 16px #0f172a14;transform:translateY(-1px)}
 .mini-card-link:focus{outline:2px solid #f59e0b;outline-offset:2px}
 
-/* Pack EV live calc */
-#result{display:block;margin-top:1rem}
-#result .stats{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
-#profit.up{color:#16a34a}
-#profit.down{color:#dc2626}
+/* Cost of ripping */
+.rip h1{margin-bottom:.85rem}
+.rip #setFilter{margin-bottom:.45rem}
+.rip-cost-head{
+  display:flex;align-items:baseline;justify-content:space-between;gap:.75rem;
+}
+.rip-cost-head label{margin-bottom:.25rem}
+.rip-ebay{font-size:.82rem;font-weight:700;white-space:nowrap}
+.rip-ebay[hidden]{display:none}
+.rip-line{
+  margin:1rem 0 0;font-size:1.2rem;font-weight:800;color:#0f172a;line-height:1.35;
+}
+.rip-note{margin:.2rem 0 0;font-size:.72rem;color:#94a3b8}
+.rip h2{font-size:.95rem;margin:1.15rem 0 .45rem}
+.rip-cards{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.4rem}
+.rip-cards a{
+  display:grid;grid-template-columns:40px minmax(0,1fr) auto;column-gap:.65rem;row-gap:0;
+  align-items:center;padding:.4rem .55rem;border:1px solid var(--line);border-radius:12px;
+  background:#fff;color:inherit;text-decoration:none;
+}
+.rip-cards a:hover{text-decoration:none;border-color:#fcd34d}
+.rip-cards img,.rip-ph{
+  grid-row:1 / span 2;width:40px;height:56px;object-fit:cover;border-radius:4px;background:#f8fafc;
+}
+.rip-name{
+  font-weight:700;color:#0f172a;font-size:.92rem;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.rip-price{grid-row:1 / span 2;font-weight:800;color:#b45309;font-size:.92rem;white-space:nowrap}
+.rip-odds{grid-column:2;color:#2563eb;font-size:.78rem}
+.rip-empty{color:var(--muted);font-size:.85rem;margin:0;padding:.15rem 0;list-style:none}
+@media(max-width:600px){
+  .rip-line{font-size:1.05rem}
+  .rip-cards a{padding:.45rem .4rem;column-gap:.5rem}
+  .rip-name,.rip-price{font-size:.86rem}
+}
 
 /* —— Shows directory —— */
 .shows-toolbar{display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end;margin:.4rem 0 1rem}
@@ -413,37 +444,9 @@ button:disabled{opacity:.55;cursor:not-allowed;filter:none}
   background:#fff;border:1px solid var(--line);border-radius:14px;padding:1rem;margin:1rem 0
 }
 
-/* Pack EV — live chase strip */
-.chase-live{
-  margin-top:.75rem;padding:.7rem .75rem;background:#f0fdf4;border:1px solid #bbf7d0;
-  border-radius:14px;
-}
-.chase-live[hidden]{display:none!important}
-.chase-live-head{display:flex;flex-wrap:wrap;gap:.4rem .65rem;align-items:center;margin-bottom:.45rem}
-.chase-live-list{display:flex;flex-wrap:wrap;gap:.45rem}
-.chase-chip{
-  display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .45rem .35rem .35rem;
-  background:#fff;border:1px solid #d1fae5;border-radius:12px;text-decoration:none;color:inherit;
-  max-width:100%;
-}
-.chase-chip:hover{border-color:#86efac;box-shadow:0 2px 8px #16653414}
-.chase-chip .thumb{width:28px;height:40px;flex:0 0 auto}
-.chase-chip-meta{display:flex;flex-direction:column;min-width:0;line-height:1.2}
-.chase-chip-meta b{font-size:.88rem;color:#166534}
-.chase-chip-meta .sub{font-size:.68rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:9.5rem}
-.chase-use{
-  margin-left:.15rem;padding:.2rem .45rem;font-size:.68rem;font-weight:700;
-  border-radius:8px;border:1px solid #86efac;background:#ecfdf5;color:#166534;cursor:pointer;
-}
-.chase-use:hover{background:#d1fae5}
 button.linkish{
   display:inline;width:auto;margin:0;padding:0;border:0;background:none;color:#166534;
   font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;box-shadow:none;filter:none;
-}
-@media(max-width:600px){
-  .chase-live{padding:.6rem}
-  .chase-chip{flex:1 1 calc(50% - .45rem);min-width:140px}
-  .chase-chip-meta .sub{max-width:7.5rem}
 }
 
 /* Today's movers (home) */
