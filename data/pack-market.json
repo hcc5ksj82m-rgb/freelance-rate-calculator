@@ -1,7 +1,7 @@
 {
   "source": "ebay_sold",
   "status": "links_ready_api_pending",
-  "note": "Morning check 2026-10-09 Australia/Sydney: sets catalog UNCHANGED at 176 (API totalCount 176, name/series/releaseDate/cardCount match). Live TCGPlayer refresh: attempted 166, updated 33, unchanged 126, kept_prior 7 (keepers include base6-95 absurd crash 550→4.9; neo1-9 market below 1st-ed low; ecard3-H9 no usable API price; plus phantom-high listing lows on ex16-102/ex13-102/pop4-1/col1-SL10). History snapshot day 2026-10-08: total 19274, live_api 166, catalog 19108. Shows: +6 AU events (Collector Con Campbelltown/Minto 10-25, Onestoppokeshop League Cup 10-17 + Delta Reign PR #2 10-31, Hobby Collectors Fairfield Delta Reign 10-24–30, Collector Con Penrith 11-22, Collect-It Con Melbourne TCG 11-14); Collect-A-Con Chicago Fall 10-10–11 re-verified. No git push this run.",
-  "updated": "2026-10-09",
+  "note": "Morning check 2026-10-10 Australia/Sydney: sets catalog UNCHANGED at 176 (API totalCount 176). Live TCGPlayer refresh: attempted 166, updated 28, unchanged 134, kept_prior 4 (ecard3-H9 no usable price; base6-86/base6-95 absurd crashes; base6-29 suspicious reverseHolofoil spike 1042\u21923300). History snapshot day 2026-10-09: total 19274, live_api 166, catalog 19108. Shows: 91\u219294 (+3 verified League Cups: Maze Fitzroy 10-18, Plenty of Games Melb 10-25, Anime Alley Toronto 11-07); past/happening labels applied; Collect-A-Con Chicago Fall re-verified Oct 10\u201311.",
+  "updated": "2026-10-10",
   "packs": {}
 }

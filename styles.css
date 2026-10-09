@@ -357,6 +357,8 @@ button:disabled{opacity:.55;cursor:not-allowed;filter:none}
 .card-spot{font-size:1.75rem;font-weight:900;color:#0f172a;line-height:1.1}
 .card-detail-price{margin:.55rem 0 .75rem}
 .card-price-range{margin-top:.2rem}
+.market-sold-compare{margin-top:.35rem}
+.market-sold-compare[hidden]{display:none}
 .price-change{display:flex;flex-wrap:wrap;align-items:center;gap:.35rem .55rem;margin:.4rem 0 0}
 .price-change[hidden]{display:none !important}
 .price-change .tip{margin:0;font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}

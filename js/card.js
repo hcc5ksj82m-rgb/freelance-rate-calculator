@@ -122,6 +122,31 @@
     return Number(m[3]) + ' ' + MONTHS[Number(m[2]) - 1];
   }
 
+  function paintMarketSoldCompare(market, soldAvg) {
+    var el = $('marketSoldCompare');
+    if (!el) {
+      var pb = $('priceBlock');
+      if (!pb) return;
+      el = document.createElement('div');
+      el.id = 'marketSoldCompare';
+      el.className = 'tip market-sold-compare';
+      pb.appendChild(el);
+    }
+    if (!(market > 0) || !(soldAvg > 0)) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    var pct = ((market - soldAvg) / soldAvg) * 100;
+    var rel = Math.abs(pct) < 0.05 ? 'about even vs recent sold'
+      : (pct > 0 ? (pct.toFixed(1) + '% above recent sold')
+                 : (Math.abs(pct).toFixed(1) + '% below recent sold'));
+    el.hidden = false;
+    el.textContent = 'market ' + fmtMoney(market, 'USD')
+      + ' · recent sold avg ' + fmtMoney(soldAvg, 'USD')
+      + ' (' + rel + ')';
+  }
+
   function paintPriceChange(changes) {
     var el = $('priceChange');
     if (!el) return;
@@ -230,6 +255,13 @@
       PackEVPriceHistory.mount($('historyMount'), normalizeForHistory(card, p), window.Chart, {
         onSummary: function (summary) {
           paintPriceChange(summary && summary.priceChanges);
+          var soldAvg = null;
+          if (summary && !summary.error && summary.latestDaily && summary.latestDaily.value > 0) {
+            soldAvg = summary.latestDaily.value;
+          }
+          /* Sold averages are USD. Skip the % line when the spot price is not. */
+          var marketUsd = (p && (!p.currency || p.currency === 'USD')) ? p.value : null;
+          paintMarketSoldCompare(marketUsd, soldAvg);
           var dailyEl = $('soldDaily');
           var monthEl = $('soldMonthly');
           var noteEl = $('soldNote');
