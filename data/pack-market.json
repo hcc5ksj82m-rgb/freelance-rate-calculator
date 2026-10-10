@@ -1,7 +1,7 @@
 {
   "source": "ebay_sold",
   "status": "links_ready_api_pending",
-  "note": "Morning check 2026-10-10 Australia/Sydney: sets catalog UNCHANGED at 176 (API totalCount 176). Live TCGPlayer refresh: attempted 166, updated 28, unchanged 134, kept_prior 4 (ecard3-H9 no usable price; base6-86/base6-95 absurd crashes; base6-29 suspicious reverseHolofoil spike 1042\u21923300). History snapshot day 2026-10-09: total 19274, live_api 166, catalog 19108. Shows: 91\u219294 (+3 verified League Cups: Maze Fitzroy 10-18, Plenty of Games Melb 10-25, Anime Alley Toronto 11-07); past/happening labels applied; Collect-A-Con Chicago Fall re-verified Oct 10\u201311.",
-  "updated": "2026-10-10",
+  "note": "Morning check 2026-10-11 Australia/Sydney: sets catalog UNCHANGED at 176 (API totalCount 176; names, series, release dates, and card totals match; custom MSRP/eBay/EV kept). Live TCGPlayer refresh: attempted 166, updated 11, unchanged 149, kept_prior 6 (ecard3-H9 no usable TCGPlayer price; ecard2-149 market 4500→500 below a $10k low; base6-86/base6-95/ecard3-11 priced variant dropped; base6-29 reverseHolofoil market 1042.66→3300 above a $650 high). History snapshot day 2026-10-10: total 19274, live_api 166, catalog 19108. Shows: 94 events, no new verified additions; Cork Card Show (ended 2026-10-10) marked past; The TCG Expo — Malvern marked happening; lastUpdated 2026-10-11.",
+  "updated": "2026-10-11",
   "packs": {}
 }

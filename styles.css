@@ -406,6 +406,10 @@ button:disabled{opacity:.55;cursor:not-allowed;filter:none}
 .rip-price{grid-row:1 / span 2;font-weight:800;color:#b45309;font-size:.92rem;white-space:nowrap}
 .rip-odds{grid-column:2;color:#2563eb;font-size:.78rem}
 .rip-empty{color:var(--muted);font-size:.85rem;margin:0;padding:.15rem 0;list-style:none}
+.pack-cue{margin:.85rem 0;padding:.85rem .9rem;border:1px solid var(--line);border-radius:14px;background:#fffdf7}
+.pack-cue h2{font-size:.95rem;margin:.9rem 0 .4rem}
+.pack-cue .rip-line{margin:.1rem 0 0;font-size:1.05rem}
+.pack-cue .rip-note a{font-weight:700}
 @media(max-width:600px){
   .rip-line{font-size:1.05rem}
   .rip-cards a{padding:.45rem .4rem;column-gap:.5rem}

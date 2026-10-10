@@ -1,6 +1,6 @@
 {
-  "lastUpdated": "2026-10-10",
-  "note": "Curated static listing of real Pokemon / TCG collector shows in English-speaking countries. Dates and venues change — always confirm on the organizer link. Not affiliated with The Pokemon Company. No invented events; last refreshed 2026-10-10 Australia/Sydney. Past events marked status=past; events spanning today marked status=happening.",
+  "lastUpdated": "2026-10-11",
+  "note": "Curated static listing of real Pokemon / TCG collector shows in English-speaking countries. Dates and venues change — always confirm on the organizer link. Not affiliated with The Pokemon Company. No invented events; last refreshed 2026-10-11 Australia/Sydney. Past events marked status=past; events spanning today marked status=happening.",
   "countries": [
     {
       "id": "usa",
@@ -673,7 +673,8 @@
               "venue": "Malvern Town Hall, Malvern (Melbourne)",
               "url": "https://cardatlas.app/blog/shows/international/",
               "type": "show",
-              "notes": "Melbourne-area TCG expo day."
+              "notes": "Melbourne-area TCG expo day. On today (2026-10-11 Australia/Sydney).",
+              "status": "happening"
             },
             {
               "name": "Collectorama Melbourne",
@@ -1003,8 +1004,8 @@
               "venue": "The Marina Market, Cork",
               "url": "https://cardatlas.app/blog/shows/international/",
               "type": "show",
-              "notes": "Cork trading-card market day.",
-              "status": "happening"
+              "notes": "Past (ended 2026-10-10). Cork trading-card market day.",
+              "status": "past"
             }
           ]
         },

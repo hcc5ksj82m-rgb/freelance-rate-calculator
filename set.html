@@ -29,6 +29,12 @@
       <span class="pill">LIVE FEED</span>
       <h1 id="title">Loading set…</h1>
       <p class="lead" id="lead"></p>
+      <div id="packCue" class="pack-cue" hidden>
+        <p id="packCueLine" class="rip-line"></p>
+        <p class="rip-note" id="packCueNote"></p>
+        <h2>Top cards</h2>
+        <ul id="chaseList" class="rip-cards"></ul>
+      </div>
       <div class="warn">
         Card images + market prices load from our catalog (TCGPlayer / Cardmarket snapshots when present).
         Pull odds are <strong>estimated by rarity</strong> (not official sealed odds — those are unpublished for most sets).
@@ -120,6 +126,141 @@
       return sym + Number(p.value).toFixed(2) + ' · ' + p.source;
     }
 
+    function usd(n) {
+      const v = Number(n);
+      if (!Number.isFinite(v)) return '—';
+      return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    /* Same saved weights as Pack EV: dead pack plus one chase hit. */
+    function modelEv(s) {
+      const dead = s && s.evDeadUsd != null ? Number(s.evDeadUsd) : NaN;
+      const odds = s && s.evChaseOdds != null ? Number(s.evChaseOdds) : NaN;
+      const chase = s && s.evChaseUsd != null ? Number(s.evChaseUsd) : NaN;
+      if (!Number.isFinite(dead) || !Number.isFinite(odds) || odds < 1 || !Number.isFinite(chase)) return null;
+      return dead * (1 - 1 / odds) + chase * (1 / odds);
+    }
+
+    function showPackCue(s) {
+      const box = $('packCue');
+      const line = $('packCueLine');
+      const note = $('packCueNote');
+      const ev = modelEv(s);
+      if (!s || ev == null) {
+        box.hidden = true;
+        return;
+      }
+      box.hidden = false;
+      line.textContent = '';
+      line.append('Pack EV ' + usd(ev));
+      const msrp = s.packMsrpUsd != null ? Number(s.packMsrpUsd) : NaN;
+      if (Number.isFinite(msrp) && msrp > 0) {
+        const edge = ev - msrp;
+        line.append(' · ');
+        const span = document.createElement('span');
+        if (Math.abs(edge) < 0.005) {
+          span.textContent = 'even with ' + usd(msrp) + ' MSRP';
+        } else if (edge > 0) {
+          span.className = 'up';
+          span.textContent = usd(edge) + ' above ' + usd(msrp) + ' MSRP';
+        } else {
+          span.className = 'down';
+          span.textContent = usd(Math.abs(edge)) + ' below ' + usd(msrp) + ' MSRP';
+        }
+        line.append(span);
+      }
+      note.textContent = '';
+      note.append('Estimates only. ');
+      const a = document.createElement('a');
+      a.href = 'rip.html?set=' + encodeURIComponent(s.id);
+      a.textContent = 'Check a street pack cost';
+      note.append(a);
+    }
+
+    function chaseEmpty(text) {
+      const list = $('chaseList');
+      if (!list) return;
+      list.innerHTML = '';
+      const li = document.createElement('li');
+      li.className = 'rip-empty';
+      li.textContent = text;
+      list.appendChild(li);
+    }
+
+    function renderChase(rows) {
+      const list = $('chaseList');
+      list.innerHTML = '';
+      rows.forEach(function (r) {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = 'card.html?id=' + encodeURIComponent(r.id);
+        if (r.image_small) {
+          const img = document.createElement('img');
+          img.alt = '';
+          img.loading = 'lazy';
+          img.src = r.image_small;
+          a.appendChild(img);
+        } else {
+          const ph = document.createElement('span');
+          ph.className = 'rip-ph';
+          a.appendChild(ph);
+        }
+        const name = document.createElement('span');
+        name.className = 'rip-name';
+        name.textContent = r.name || 'Card';
+        const price = document.createElement('span');
+        price.className = 'rip-price';
+        price.textContent = usd(r.market_price_usd);
+        a.appendChild(name);
+        a.appendChild(price);
+        li.appendChild(a);
+        list.appendChild(li);
+      });
+    }
+
+    let chaseGen = 0;
+    async function loadChase(id) {
+      const gen = ++chaseGen;
+      if (!id) {
+        chaseEmpty('None yet');
+        return;
+      }
+      chaseEmpty('Loading…');
+      const cfg = window.PACK_EV_SUPABASE || {};
+      const base = String(cfg.SUPABASE_URL || '').replace(/\/$/, '');
+      const key = String(cfg.SUPABASE_ANON_KEY || cfg.SUPABASE_PUBLISHABLE_KEY || '');
+      if (!base || !key) {
+        chaseEmpty('None yet');
+        return;
+      }
+      try {
+        const url = base + '/rest/v1/cards'
+          + '?select=id,name,number,market_price_usd,image_small'
+          + '&set_id=eq.' + encodeURIComponent(id)
+          + '&market_price_usd=not.is.null&market_price_usd=gte.15'
+          + '&order=market_price_usd.desc&limit=5';
+        const res = await fetch(url, {
+          headers: {
+            Accept: 'application/json',
+            apikey: key,
+            Authorization: 'Bearer ' + key
+          }
+        });
+        if (gen !== chaseGen) return;
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const rows = await res.json();
+        if (gen !== chaseGen) return;
+        if (!Array.isArray(rows) || !rows.length) {
+          chaseEmpty('None yet');
+          return;
+        }
+        renderChase(rows);
+      } catch (err) {
+        if (gen !== chaseGen) return;
+        chaseEmpty('Couldn’t load');
+      }
+    }
+
     function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
     async function fetchJsonWithRetry(url) {
@@ -191,6 +332,7 @@
         return;
       }
       $('ripLink').href = 'rip.html?set=' + encodeURIComponent(setId);
+      loadChase(setId);
       try {
         // Prefer local sets.json (reliable on Pages); live API is optional and often 5xx.
         let metaLoaded = false;
@@ -204,6 +346,7 @@
             $('lead').textContent = (local.series || '')
               + (local.releaseDate ? ' · released ' + local.releaseDate : '')
               + (local.cardCount != null ? ' · ' + local.cardCount + ' cards' : '');
+            showPackCue(local);
             metaLoaded = true;
           }
         } catch (_) { /* ignore */ }
